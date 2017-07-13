@@ -67,7 +67,7 @@ int main(int argc, char **argv)
     for(int i = 100; ros::ok() && i > 0; --i){
 	att_vel_pub.publish(twist);
         att_pos_pub.publish(pose);
-        att_thr_pub.publish(thr
+        att_thr_pub.publish(thr);
         ros::spinOnce();
         rate.sleep();
     }
