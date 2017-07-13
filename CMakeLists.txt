@@ -140,6 +140,9 @@ target_link_libraries( landTest2 ${catkin_LIBRARIES})
 add_executable( fuck src/idk.cpp)
 target_link_libraries(fuck ${catkin_LIBRARIES})
 
+add_executable(takeoffTest src/takeoff.cpp)
+target_link_libraries(takeoffTest ${catkin_LIBRARIES})
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
