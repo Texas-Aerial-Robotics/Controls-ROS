@@ -43,14 +43,14 @@ int main(int argc, char **argv)
         rate.sleep();
     }
 
-    geometry_msgs::PoseStamped pose;
+    geometry_msgs::PoseStamped pose1;
     pose.pose.position.x = 0;
     pose.pose.position.y = 0;
-    pose.pose.position.z = 1;
+    pose.pose.position.z = 0;
     pose.pose.orientation.x = 0;
     pose.pose.orientation.y = 0;
     pose.pose.orientation.z = 0;
-    pose.pose.orientation.w = 0;
+    pose.pose.orientation.w = 1;
 
     geometry_msgs::TwistStamped twist;
     twist.twist.linear.x = 0;
@@ -66,7 +66,7 @@ int main(int argc, char **argv)
     //send a few setpoints before starting
     for(int i = 100; ros::ok() && i > 0; --i){
 	att_vel_pub.publish(twist);
-        att_pos_pub.publish(pose);
+        att_pos_pub.publish(pose1);
         att_thr_pub.publish(thr);
         ros::spinOnce();
         rate.sleep();
@@ -100,7 +100,7 @@ int main(int argc, char **argv)
         }
 
 	att_vel_pub.publish(twist);
-        att_pos_pub.publish(pose);
+        att_pos_pub.publish(pose1);
 	att_thr_pub.publish(thr);
 
         ros::spinOnce();
