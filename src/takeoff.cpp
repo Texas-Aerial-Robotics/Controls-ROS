@@ -31,7 +31,7 @@ int main(int argc, char **argv)
 
     ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>
             ("mavros/state", 1, state_cb);
-    ros::Subscriber rng_sub = nh.subscrube<sensor_msgs::Range>("mavros/rangefinder/rangefinder",1,rng_cb);
+    ros::Subscriber rng_sub = nh.subscribe<sensor_msgs::Range>("mavros/rangefinder/rangefinder",1,rng_cb);
 
     ros::Publisher att_pub = nh.advertise<mavros_msgs::AttitudeTarget>("mavros/setpoint_raw/attitude", 10);
 
@@ -55,7 +55,7 @@ int main(int argc, char **argv)
     att.body_rate.x=0;
     att.body_rate.y=0;
     att.body_rate.z=0;
-    att.thrust=.63;
+    att.thrust=.55;
     
 
     //send a few setpoints before starting
@@ -98,7 +98,7 @@ int main(int argc, char **argv)
 	att_pub.publish(att);
  
         if(rngfnd.range>1.5){
-            if(set_mode_client.call(alt_set_mode) && alt_set_mode.response.success){
+            if(set_mode_client.call(alt_set_mode)){
                 ROS_INFO("land");
             }
         }
