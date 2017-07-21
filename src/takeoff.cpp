@@ -4,12 +4,16 @@
  * stack and tested in Gazebo SITL
  */
 
+#include <fstream>
+
 #include <ros/ros.h>
 #include <mavros_msgs/CommandBool.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/State.h>
 #include <mavros_msgs/AttitudeTarget.h>
 #include <sensor_msgs/Range.h>
+
+std::ofstream outRng;
 
 mavros_msgs::State current_state;
 void state_cb(const mavros_msgs::State::ConstPtr& msg){
@@ -18,7 +22,10 @@ void state_cb(const mavros_msgs::State::ConstPtr& msg){
 
 sensor_msgs::Range rngfnd;
 void rng_cb(const sensor_msgs::Range::ConstPtr& msg){
+    outRng.open("~/rng.log");
     rngfnd = *msg;
+    float rng = rngfnd.range;
+    outRng << rng;
 }
 
 int main(int argc, char **argv)
