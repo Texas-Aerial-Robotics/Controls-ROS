@@ -5,9 +5,6 @@
  */
 
 #include <ros/ros.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/TwistStamped.h>
-#include <std_msgs/Float64.h>
 #include <mavros_msgs/CommandBool.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/State.h>
@@ -29,8 +26,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "offb_node");
     ros::NodeHandle nh;
 
-    ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>
-            ("mavros/state", 1, state_cb);
+    ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>("mavros/state", 1, state_cb);
     ros::Subscriber rng_sub = nh.subscribe<sensor_msgs::Range>("mavros/rangefinder/rangefinder",1,rng_cb);
 
     ros::Publisher att_pub = nh.advertise<mavros_msgs::AttitudeTarget>("mavros/setpoint_raw/attitude", 10);
@@ -78,17 +74,14 @@ int main(int argc, char **argv)
 
     while(ros::ok()){
         std::cout << current_state.mode << std::endl;
-        if( current_state.mode == "ALT_HOLD" &&
-            (ros::Time::now() - last_request > ros::Duration(5.0))){
+        if( current_state.mode == "ALT_HOLD" && (ros::Time::now() - last_request > ros::Duration(5.0))){
             if( set_mode_client.call(offb_set_mode)){
                 ROS_INFO("Offboard enabled");
             }
             last_request = ros::Time::now();
         } else {
-            if( !current_state.armed && current_state.mode == "GUIDED_NOGPS" &&
-                (ros::Time::now() - last_request > ros::Duration(5.0))){
-                if( arming_client.call(arm_cmd) &&
-                    arm_cmd.response.success){
+            if( !current_state.armed && current_state.mode == "GUIDED_NOGPS" && (ros::Time::now() - last_request > ros::Duration(5.0))){
+                if( arming_client.call(arm_cmd) && arm_cmd.response.success){
                     ROS_INFO("Vehicle armed");
                 }
                 last_request = ros::Time::now();
