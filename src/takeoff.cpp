@@ -13,8 +13,6 @@
 #include <mavros_msgs/AttitudeTarget.h>
 #include <sensor_msgs/Range.h>
 
-std::ofstream outRng;
-
 mavros_msgs::State current_state;
 void state_cb(const mavros_msgs::State::ConstPtr& msg){
     current_state = *msg;
@@ -22,10 +20,11 @@ void state_cb(const mavros_msgs::State::ConstPtr& msg){
 
 sensor_msgs::Range rngfnd;
 void rng_cb(const sensor_msgs::Range::ConstPtr& msg){
-    outRng.open("~/rng.log");
+    std::ofstream outRng("~/rng.log",std::ios::trunc);
     rngfnd = *msg;
     float rng = rngfnd.range;
     outRng << rng;
+    outRng.close();
 }
 
 int main(int argc, char **argv)
@@ -80,8 +79,8 @@ int main(int argc, char **argv)
     ros::Time last_request = ros::Time::now();
 
     while(ros::ok()){
-        std::cout << current_state.mode << std::endl;
-        if( current_state.mode == "ALT_HOLD" && (ros::Time::now() - last_request > ros::Duration(5.0))){
+//        std::cout << current_state.mode << std::endl;
+        if( current_state.mode == "ACRO" && (ros::Time::now() - last_request > ros::Duration(5.0))){
             if( set_mode_client.call(offb_set_mode)){
                 ROS_INFO("Offboard enabled");
             }
@@ -97,7 +96,7 @@ int main(int argc, char **argv)
 
 	att_pub.publish(att);
  
-        if(rngfnd.range>1.5){
+        if(rngfnd.range>1.5 && current_state.mode=="GUIDED_NOGPS"){
             if(set_mode_client.call(alt_set_mode)){
                 ROS_INFO("land");
             }
