@@ -1,0 +1,12 @@
+#!/bin/bash
+ while [ 1 ]
+ do
+ cpu_temp=$(< /sys/class/thermal/thermal_zone0/temp)
+ cpu_temp=$(($cpu_temp))
+ ceclis=$(echo "scale=1; $cpu_temp / 1000" | bc | tr '\n' ' ')
+ echo "$ceclis °C" | tr '\n' ' '
+ echo "             |             " | tr '\n' ' '
+ echo "scale=2; ( $cpu_temp / 1000 ) * 9 / 5 + 32" | bc | tr '\n' ' '
+ echo "˚F"
+ done
+
