@@ -1,0 +1,27 @@
+#!/bin/bash
+
+#made by Eric Johnson
+
+{
+logDir=/home/eric/logs
+cd $logDir
+echo "adding changes..."
+echo
+git add --ignore-removal . 2>&1
+echo
+echo "commiting to master..."
+echo
+git commit -m "new logs pushed on `date`" 2>&1
+echo
+echo "pushing logs..."
+echo
+git push 2>&1
+echo
+echo "removing logs..."
+echo
+rm log*
+echo
+echo "done."
+echo
+} >> /home/eric/gitTest.log
+
