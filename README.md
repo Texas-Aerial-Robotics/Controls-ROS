@@ -23,5 +23,4 @@ Install `mavros` from source using https://dev.px4.io/en/ros/mavros_installation
 
 # Build instructions 
 
-Inside catkin_ws, run `catkin_make`
-
+Inside `catkin_ws`, run `catkin build`
