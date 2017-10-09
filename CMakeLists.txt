@@ -143,6 +143,9 @@ target_link_libraries(fuck ${catkin_LIBRARIES})
 add_executable(takeoffTest src/takeoff.cpp)
 target_link_libraries(takeoffTest ${catkin_LIBRARIES})
 
+add_executable(takeoffLog src/takeoff_with_logging.cpp)
+target_link_libraries(takeoffLog ${catkin_LIBRARIES})
+
 add_executable(loggingCV src/logging.cpp)
 target_link_libraries(loggingCV ${catkin_LIBRARIES})
 ## Rename C++ executable without prefix
