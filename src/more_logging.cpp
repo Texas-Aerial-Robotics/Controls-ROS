@@ -27,7 +27,7 @@ void imu_data_cb(sensor_msgs::Imu::ConstPtr& msg)
   imu_data_msg = *msg;
 }
 
-void imu_temp_cb(sensor_msgs:Temperature::ConstPtr& msg)
+void imu_temp_cb(sensor_msgs::Temperature::ConstPtr& msg)
 {
   imu_temp_msg = *msg;
 }
@@ -37,14 +37,14 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "days_before_logs");
   ros::NodeHandle dbl;
 
-  ros::Subscriber opt_flow = dbl.subscribe<mavros_msgs::OpticalFLowRad>("mavros/px4flow/raw/optical_flow_rad",1,opt_flow_cb);
+  ros::Subscriber opt_flow = dbl.subscribe<mavros_msgs::OpticalFlowRad>("mavros/px4flow/raw/optical_flow_rad",1,opt_flow_cb);
   ros::Subscriber comp_hdg = dbl.subscribe<std_msgs::Float64>("mavros/global_position/compass_hdg",1,comp_hdg_cb);
   ros::Subscriber imu_data = dbl.subscribe<sensor_msgs::Imu>("mavros/imu/data",1,imu_data_cb);
-  ros::Subscriber imu_temp = dbl.subscribe<sensor_msgs::Temperature("mavros/imu/temperature",1,imu_temp_cb);
+  ros::Subscriber imu_temp = dbl.subscribe<sensor_msgs::Temperature>("mavros/imu/temperature",1,imu_temp_cb);
 
-  std::ofstream outTimeHist("~/TimeHist.log",std::ios::append);
+  std::ofstream outTimeHist("~/TimeHist.log",std::ios::app);
 
-  while ros::ok()
+  while (ros::ok())
   {
     ros::spinOnce();
     std::ofstream out1Line("~/1Line.log",std::ios::trunc);
