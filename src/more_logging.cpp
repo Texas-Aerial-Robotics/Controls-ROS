@@ -12,22 +12,22 @@ std_msgs::Float64 comp_hdg_msg;
 sensor_msgs::Imu imu_data_msg;
 sensor_msgs::Temperature imu_temp_msg;
 
-void opt_flow_cb(mavros_msgs::OpticalFlowRad::ConstPtr& msg)
+void opt_flow_cb(const mavros_msgs::OpticalFlowRad::ConstPtr& msg)
 {
   opt_flow_msg = *msg;
 }
 
-void comp_hdg_cb(std_msgs::Float64::ConstPtr& msg)
+void comp_hdg_cb(const std_msgs::Float64::ConstPtr& msg)
 {
   comp_hdg_msg = *msg;
 }
 
-void imu_data_cb(sensor_msgs::Imu::ConstPtr& msg)
+void imu_data_cb(const sensor_msgs::Imu::ConstPtr& msg)
 {
   imu_data_msg = *msg;
 }
 
-void imu_temp_cb(sensor_msgs::Temperature::ConstPtr& msg)
+void imu_temp_cb(const sensor_msgs::Temperature::ConstPtr& msg)
 {
   imu_temp_msg = *msg;
 }
