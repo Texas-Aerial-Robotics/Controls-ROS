@@ -6,6 +6,7 @@
 #include <sensor_msgs/Imu.h>
 
 #include <fstream>
+#include <time.h>
 #include <ctime>
 
 mavros_msgs::OpticalFlowRad opt_flow_msg;
@@ -33,6 +34,15 @@ void imu_temp_cb(const sensor_msgs::Temperature::ConstPtr& msg)
   imu_temp_msg = *msg;
 }
 
+const std::string currentDateTime()
+{
+  time_t now = time(0);
+  struct tm tstruct;
+  char buf[80]
+  tstruct = *localtime(&now);
+  strftime(buf,sizeof(buf),"%m_%d_%y_%X", &tstruct);
+}
+
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "days_before_logs");
@@ -43,14 +53,18 @@ int main(int argc, char **argv)
   ros::Subscriber imu_data = dbl.subscribe<sensor_msgs::Imu>("mavros/imu/data",1,imu_data_cb);
   ros::Subscriber imu_temp = dbl.subscribe<sensor_msgs::Temperature>("mavros/imu/temperature",1,imu_temp_cb);
 
-  std::ofstream outTimeHist("~/TimeHist.log",std::ios::app);
+  string date = currentDateTime();
+  std::ofstream outTimeHist("/sdCard/Logs/"+date+"_TimeHist.log",std::ios::app);
+  time_t timer;
+  time_t init_time;
+  double seconds;
   
-  
+  time(&init_time);
 
   while (ros::ok())
   {
     ros::spinOnce();
-    std::ofstream out1Line("~/1Line.log",std::ios::trunc);
+    std::ofstream out1Line("/sdCard/Logs/1Line.log",std::ios::trunc);
 
     float hdg = comp_hdg_msg.data;
     float temp = imu_temp_msg.temperature;
@@ -86,7 +100,9 @@ int main(int argc, char **argv)
     out1Line << imu_linAccelX << "," << imu_linAccelY << "," << imu_linAccelZ;
     out1Line.close();
 
-    outTimeHist << "," << hdg << "," << temp << ",";
+    time(&timer);
+    seconds = difftime(timer,init_time);
+    outTimeHist << seconds << "," << hdg << "," << temp << ",";
     outTimeHist << optflow_intTime << "," << optflow_intX << "," << optflow_intY << ",";
     outTimeHist << optflow_intXgyro << "," << optflow_intYgyro << "," << optflow_intZgyro << ",";
     outTimeHist << optflow_quality << "," << optflow_timeDel << "," << optflow_dist << ",";
