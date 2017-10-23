@@ -5,6 +5,7 @@
 #include <sensor_msgs/Temperature.h>
 #include <sensor_msgs/Imu.h>
 
+#include <string>
 #include <fstream>
 #include <time.h>
 #include <ctime>
@@ -38,9 +39,10 @@ const std::string currentDateTime()
 {
   time_t now = time(0);
   struct tm tstruct;
-  char buf[80]
+  char buf[80];
   tstruct = *localtime(&now);
   strftime(buf,sizeof(buf),"%m_%d_%y_%X", &tstruct);
+  return buf;
 }
 
 int main(int argc, char **argv)
@@ -53,8 +55,8 @@ int main(int argc, char **argv)
   ros::Subscriber imu_data = dbl.subscribe<sensor_msgs::Imu>("mavros/imu/data",1,imu_data_cb);
   ros::Subscriber imu_temp = dbl.subscribe<sensor_msgs::Temperature>("mavros/imu/temperature",1,imu_temp_cb);
 
-  string date = currentDateTime();
-  std::ofstream outTimeHist("/sdCard/Logs/"+date+"_TimeHist.log",std::ios::app);
+  std::string date_file = "/sdCard/Logs/"+currentDateTime();+"_TimeHist.log";
+  std::ofstream outTimeHist(date_file.c_str(),std::ios::app);
   time_t timer;
   time_t init_time;
   double seconds;
@@ -108,7 +110,7 @@ int main(int argc, char **argv)
     outTimeHist << optflow_quality << "," << optflow_timeDel << "," << optflow_dist << ",";
     outTimeHist << imu_orientX << "," << imu_orientY << "," << imu_orientZ << "," << imu_orientW << ",";
     outTimeHist << imu_angularX << "," << imu_angularY << "," << imu_angularZ << ",";
-    outTimeHist << imu_linAccelX << "," << imu_linAccelY << "," << imu_linAccelZ << "/n";
+    outTimeHist << imu_linAccelX << "," << imu_linAccelY << "," << imu_linAccelZ << std::endl;
     
   }
   outTimeHist.close();
