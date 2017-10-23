@@ -77,22 +77,22 @@ int main(int argc, char **argv)
     float imu_linAccelY = imu_data_msg.linear_acceleration.y;
     float imu_linAccelZ = imu_data_msg.linear_acceleration.z;
 
-    out1Line << hdg << "," << temp << ","
-    out1Line << optflow_intTime << "," << optflow_intX << "," << optflow_intY << ","
-    out1Line << optflow_intXgyro << "," << optflow_intYgyro << "," << optflow_intZgyro << ","
-    out1Line << optflow_quality << "," << optflow_timeDel << "," << optflow_dist << ","
-    out1Line << imu_orientX << "," << imu_orientY << "," << imu_orientZ << "," << imu_orientW << ","
-    out1Line << imu_angularX << "," << imu_angularY << "," << imu_angularZ << ","
-    out1Line << imu_linAccelX << "," << imu_linAccelY << "," << imu_linAccelZ
+    out1Line << hdg << "," << temp << ",";
+    out1Line << optflow_intTime << "," << optflow_intX << "," << optflow_intY << ",";
+    out1Line << optflow_intXgyro << "," << optflow_intYgyro << "," << optflow_intZgyro << ",";
+    out1Line << optflow_quality << "," << optflow_timeDel << "," << optflow_dist << ",";
+    out1Line << imu_orientX << "," << imu_orientY << "," << imu_orientZ << "," << imu_orientW << ",";
+    out1Line << imu_angularX << "," << imu_angularY << "," << imu_angularZ << ",";
+    out1Line << imu_linAccelX << "," << imu_linAccelY << "," << imu_linAccelZ;
     out1Line.close();
 
-    outTimeHist << "," << hdg << "," << temp << ","
-    outTimeHist << optflow_intTime << "," << optflow_intX << "," << optflow_intY << ","
-    outTimeHist << optflow_intXgyro << "," << optflow_intYgyro << "," << optflow_intZgyro << ","
-    outTimeHist << optflow_quality << "," << optflow_timeDel << "," << optflow_dist << ","
-    outTimeHist << imu_orientX << "," << imu_orientY << "," << imu_orientZ << "," << imu_orientW << ","
-    outTimeHist << imu_angularX << "," << imu_angularY << "," << imu_angularZ << ","
-    outTimeHist << imu_linAccelX << "," << imu_linAccelY << "," << imu_linAccelZ << "/n"
+    outTimeHist << "," << hdg << "," << temp << ",";
+    outTimeHist << optflow_intTime << "," << optflow_intX << "," << optflow_intY << ",";
+    outTimeHist << optflow_intXgyro << "," << optflow_intYgyro << "," << optflow_intZgyro << ",";
+    outTimeHist << optflow_quality << "," << optflow_timeDel << "," << optflow_dist << ",";
+    outTimeHist << imu_orientX << "," << imu_orientY << "," << imu_orientZ << "," << imu_orientW << ",";
+    outTimeHist << imu_angularX << "," << imu_angularY << "," << imu_angularZ << ",";
+    outTimeHist << imu_linAccelX << "," << imu_linAccelY << "," << imu_linAccelZ << "/n";
     
   }
   outTimeHist.close();
