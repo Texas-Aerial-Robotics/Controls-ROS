@@ -57,6 +57,13 @@ int main(int argc, char **argv)
 
   std::string date_file = "/sdCard/Logs/"+currentDateTime();+"_TimeHist.log";
   std::ofstream outTimeHist(date_file.c_str(),std::ios::app);
+
+  outTimeHist << "Hdg, Temp, optflow_intTime,optflow_intX,optflow_intY,optflow_intXgyro,";
+  outTimeHist << "optflow_intYgyro,optflow_intZgyro,optflow_quality,optflow_timeDel,optflow_dist,";
+  outTimeHist << "imu_orientX,imu_orientY,imu_orientZ,imu_orientW" << std::endl;
+
+  outTimeHist.close();
+
   time_t timer;
   time_t init_time;
   double seconds;
@@ -67,6 +74,8 @@ int main(int argc, char **argv)
   {
     ros::spinOnce();
     std::ofstream out1Line("/sdCard/Logs/1Line.log",std::ios::trunc);
+    std::ofstream outTimeHist(date_file.c_str(),std::ios::app);
+
 
     float hdg = comp_hdg_msg.data;
     float temp = imu_temp_msg.temperature;
@@ -111,7 +120,6 @@ int main(int argc, char **argv)
     outTimeHist << imu_orientX << "," << imu_orientY << "," << imu_orientZ << "," << imu_orientW << ",";
     outTimeHist << imu_angularX << "," << imu_angularY << "," << imu_angularZ << ",";
     outTimeHist << imu_linAccelX << "," << imu_linAccelY << "," << imu_linAccelZ << std::endl;
-    
+    outTimeHist.close();
   }
-  outTimeHist.close();
 }
