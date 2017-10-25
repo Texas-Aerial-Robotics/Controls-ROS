@@ -69,7 +69,7 @@ int main(int argc, char **argv)
 
   std::string date_file = "/sdCard/Logs/"+currentDateTime()+"_TimeHist.csv";
 
-  init_timeHist();
+  init_timeHist(date_file);
 
   struct timeval start,stop;
   gettimeofday(&start,NULL);
