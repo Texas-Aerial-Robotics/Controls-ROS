@@ -9,6 +9,7 @@
 #include <fstream>
 #include <time.h>
 #include <ctime>
+#include <chrono>
 
 mavros_msgs::OpticalFlowRad opt_flow_msg;
 std_msgs::Float64 comp_hdg_msg;
@@ -35,6 +36,17 @@ void imu_temp_cb(const sensor_msgs::Temperature::ConstPtr& msg)
   imu_temp_msg = *msg;
 }
 
+void init_timeHist(std::string file_name)
+{
+  std::ofstream outTimeHist(date_file.c_str(),std::ios::app);
+
+  outTimeHist << "Time, Hdg, Temp, optflow_intTime,optflow_intX,optflow_intY,optflow_intXgyro,";
+  outTimeHist << "optflow_intYgyro,optflow_intZgyro,optflow_quality,optflow_timeDel,optflow_dist,";
+  outTimeHist << "imu_orientX,imu_orientY,imu_orientZ,imu_orientW" << std::endl;
+
+  outTimeHist.close();
+}
+
 const std::string currentDateTime()
 {
   time_t now = time(0);
@@ -55,21 +67,11 @@ int main(int argc, char **argv)
   ros::Subscriber imu_data = dbl.subscribe<sensor_msgs::Imu>("mavros/imu/data",1,imu_data_cb);
   ros::Subscriber imu_temp = dbl.subscribe<sensor_msgs::Temperature>("mavros/imu/temperature",1,imu_temp_cb);
 
-  std::string date_file = "/sdCard/Logs/"+currentDateTime();+"_TimeHist.log";
-  std::ofstream outTimeHist(date_file.c_str(),std::ios::app);
+  std::string date_file = "/sdCard/Logs/"+currentDateTime()+"_TimeHist.csv";
 
-  outTimeHist << "Hdg, Temp, optflow_intTime,optflow_intX,optflow_intY,optflow_intXgyro,";
-  outTimeHist << "optflow_intYgyro,optflow_intZgyro,optflow_quality,optflow_timeDel,optflow_dist,";
-  outTimeHist << "imu_orientX,imu_orientY,imu_orientZ,imu_orientW" << std::endl;
+  init_timeHist();
 
-  outTimeHist.close();
-
-  time_t timer;
-  time_t init_time;
-  double seconds;
-  
-  time(&init_time);
-
+  std::chrono::high_resolution_clock::time_point t_start = std::chrono::high_resolution_clock::now();
   while (ros::ok())
   {
     ros::spinOnce();
@@ -79,7 +81,6 @@ int main(int argc, char **argv)
 
     float hdg = comp_hdg_msg.data;
     float temp = imu_temp_msg.temperature;
-    
 
     int optflow_intTime = opt_flow_msg.integration_time_us;
     float optflow_intX = opt_flow_msg.integrated_x;
@@ -111,9 +112,9 @@ int main(int argc, char **argv)
     out1Line << imu_linAccelX << "," << imu_linAccelY << "," << imu_linAccelZ;
     out1Line.close();
 
-    time(&timer);
-    seconds = difftime(timer,init_time);
-    outTimeHist << seconds << "," << hdg << "," << temp << ",";
+    std::chrono::high_resolution_clock::time_point t_now = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> time_span = t_now - t_start;
+    outTimeHist << time_span.count() << "," << hdg << "," << temp << ",";
     outTimeHist << optflow_intTime << "," << optflow_intX << "," << optflow_intY << ",";
     outTimeHist << optflow_intXgyro << "," << optflow_intYgyro << "," << optflow_intZgyro << ",";
     outTimeHist << optflow_quality << "," << optflow_timeDel << "," << optflow_dist << ",";
