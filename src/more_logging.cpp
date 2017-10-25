@@ -40,9 +40,10 @@ void init_timeHist(std::string file_name)
 {
   std::ofstream outTimeHist(date_file.c_str(),std::ios::app);
 
-  outTimeHist << "Time, Hdg, Temp, optflow_intTime,optflow_intX,optflow_intY,optflow_intXgyro,";
+  outTimeHist << "Time(ms), Hdg, Temp, optflow_intTime,optflow_intX,optflow_intY,optflow_intXgyro,";
   outTimeHist << "optflow_intYgyro,optflow_intZgyro,optflow_quality,optflow_timeDel,optflow_dist,";
-  outTimeHist << "imu_orientX,imu_orientY,imu_orientZ,imu_orientW" << std::endl;
+  outTimeHist << "imu_orientX,imu_orientY,imu_orientZ,imu_orientW,imu_angularX,imu_angularY,imu_angularZ";
+  outTimeHist << "imu_linAccelX,imu_linAccelY,imu_linAccelZ" << std::endl;
 
   outTimeHist.close();
 }
@@ -75,7 +76,7 @@ int main(int argc, char **argv)
   while (ros::ok())
   {
     ros::spinOnce();
-    std::ofstream out1Line("/sdCard/Logs/1Line.log",std::ios::trunc);
+    std::ofstream out1Line("/sdCard/Logs/1Line.csv",std::ios::trunc);
     std::ofstream outTimeHist(date_file.c_str(),std::ios::app);
 
 
