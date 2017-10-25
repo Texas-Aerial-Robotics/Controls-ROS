@@ -9,7 +9,6 @@
 #include <fstream>
 #include <time.h>
 #include <ctime>
-#include <chrono>
 
 mavros_msgs::OpticalFlowRad opt_flow_msg;
 std_msgs::Float64 comp_hdg_msg;
@@ -72,7 +71,8 @@ int main(int argc, char **argv)
 
   init_timeHist();
 
-  std::chrono::high_resolution_clock::time_point t_start = std::chrono::high_resolution_clock::now();
+  struct timeval start,stop;
+  gettimeofday(&start,NULL);
   while (ros::ok())
   {
     ros::spinOnce();
@@ -113,9 +113,8 @@ int main(int argc, char **argv)
     out1Line << imu_linAccelX << "," << imu_linAccelY << "," << imu_linAccelZ;
     out1Line.close();
 
-    std::chrono::high_resolution_clock::time_point t_now = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> time_span = t_now - t_start;
-    outTimeHist << time_span.count() << "," << hdg << "," << temp << ",";
+    gettimeofday(&stop,NULL);
+    outTimeHist << stop.tv_usec-start.tv_usec << "," << hdg << "," << temp << ",";
     outTimeHist << optflow_intTime << "," << optflow_intX << "," << optflow_intY << ",";
     outTimeHist << optflow_intXgyro << "," << optflow_intYgyro << "," << optflow_intZgyro << ",";
     outTimeHist << optflow_quality << "," << optflow_timeDel << "," << optflow_dist << ",";
