@@ -37,7 +37,7 @@ void imu_temp_cb(const sensor_msgs::Temperature::ConstPtr& msg)
 
 void init_timeHist(std::string file_name)
 {
-  std::ofstream outTimeHist(date_file.c_str(),std::ios::app);
+  std::ofstream outTimeHist(file_name.c_str(),std::ios::app);
 
   outTimeHist << "Time(ms), Hdg, Temp, optflow_intTime,optflow_intX,optflow_intY,optflow_intXgyro,";
   outTimeHist << "optflow_intYgyro,optflow_intZgyro,optflow_quality,optflow_timeDel,optflow_dist,";
