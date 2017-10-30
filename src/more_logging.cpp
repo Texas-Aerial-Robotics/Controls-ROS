@@ -10,6 +10,7 @@
 #include <time.h>
 #include <ctime>
 
+sensor_msgs::Range rng_msg;
 mavros_msgs::OpticalFlowRad opt_flow_msg;
 std_msgs::Float64 comp_hdg_msg;
 sensor_msgs::Imu imu_data_msg;
@@ -35,11 +36,16 @@ void imu_temp_cb(const sensor_msgs::Temperature::ConstPtr& msg)
   imu_temp_msg = *msg;
 }
 
+void rng_cb(const sensor_msgs::Range::ConstPtr& msg)
+{
+  rng_msg = *msg;
+}
+
 void init_timeHist(std::string file_name)
 {
   std::ofstream outTimeHist(file_name.c_str(),std::ios::app);
 
-  outTimeHist << "Time(ms), Hdg, Temp, optflow_intTime,optflow_intX,optflow_intY,optflow_intXgyro,";
+  outTimeHist << "Time(ms), Hdg, Alt, Temp, optflow_intTime,optflow_intX,optflow_intY,optflow_intXgyro,";
   outTimeHist << "optflow_intYgyro,optflow_intZgyro,optflow_quality,optflow_timeDel,optflow_dist,";
   outTimeHist << "imu_orientX,imu_orientY,imu_orientZ,imu_orientW,imu_angularX,imu_angularY,imu_angularZ";
   outTimeHist << "imu_linAccelX,imu_linAccelY,imu_linAccelZ" << std::endl;
@@ -62,6 +68,7 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "days_before_logs");
   ros::NodeHandle dbl;
 
+  ros::Subscriber rng = dbl.subscribe<sensor_msgs::Range>("mavros/rangefinder/rangefinder",1,rng_cb);
   ros::Subscriber opt_flow = dbl.subscribe<mavros_msgs::OpticalFlowRad>("mavros/px4flow/raw/optical_flow_rad",1,opt_flow_cb);
   ros::Subscriber comp_hdg = dbl.subscribe<std_msgs::Float64>("mavros/global_position/compass_hdg",1,comp_hdg_cb);
   ros::Subscriber imu_data = dbl.subscribe<sensor_msgs::Imu>("mavros/imu/data",1,imu_data_cb);
@@ -81,7 +88,9 @@ int main(int argc, char **argv)
 
 
     float hdg = comp_hdg_msg.data;
+    float rng = rng_msg.range;
     float temp = imu_temp_msg.temperature;
+
 
     int optflow_intTime = opt_flow_msg.integration_time_us;
     float optflow_intX = opt_flow_msg.integrated_x;
@@ -104,7 +113,7 @@ int main(int argc, char **argv)
     float imu_linAccelY = imu_data_msg.linear_acceleration.y;
     float imu_linAccelZ = imu_data_msg.linear_acceleration.z;
 
-    out1Line << hdg << "," << temp << ",";
+    out1Line << hdg << "," << rng <<","<< temp << ",";
     out1Line << optflow_intTime << "," << optflow_intX << "," << optflow_intY << ",";
     out1Line << optflow_intXgyro << "," << optflow_intYgyro << "," << optflow_intZgyro << ",";
     out1Line << optflow_quality << "," << optflow_timeDel << "," << optflow_dist << ",";
@@ -114,7 +123,7 @@ int main(int argc, char **argv)
     out1Line.close();
 
     gettimeofday(&stop,NULL);
-    outTimeHist << stop.tv_usec-start.tv_usec << "," << hdg << "," << temp << ",";
+    outTimeHist << stop.tv_usec-start.tv_usec << "," << hdg << "," << rng << "," << temp << ",";
     outTimeHist << optflow_intTime << "," << optflow_intX << "," << optflow_intY << ",";
     outTimeHist << optflow_intXgyro << "," << optflow_intYgyro << "," << optflow_intZgyro << ",";
     outTimeHist << optflow_quality << "," << optflow_timeDel << "," << optflow_dist << ",";
