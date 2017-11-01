@@ -95,7 +95,7 @@ int main(int argc, char **argv)
 
 	att_pub.publish(att);
  
-        if(rngfnd.range>1.5 && current_state.mode=="GUIDED_NOGPS"){
+        if(rngfnd.range>1 && current_state.mode=="GUIDED_NOGPS"){
             if(set_mode_client.call(alt_set_mode)){
                 ROS_INFO("land");
             }
