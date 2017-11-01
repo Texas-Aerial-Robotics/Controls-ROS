@@ -59,7 +59,7 @@ const std::string currentDateTime()
   struct tm tstruct;
   char buf[80];
   tstruct = *localtime(&now);
-  strftime(buf,sizeof(buf),"%m_%d_%y_%X", &tstruct);
+  strftime(buf,sizeof(buf),"%m_%d_%y-%H_%M", &tstruct);
   return buf;
 }
 
