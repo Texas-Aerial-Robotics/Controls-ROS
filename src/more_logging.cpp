@@ -80,6 +80,7 @@ int main(int argc, char **argv)
 
   struct timeval start,stop;
   gettimeofday(&start,NULL);
+  long int ms_start = start.tv_sec * 1000 + start.tv_usec / 1000;
   while (ros::ok())
   {
     ros::spinOnce();
@@ -123,7 +124,8 @@ int main(int argc, char **argv)
     out1Line.close();
 
     gettimeofday(&stop,NULL);
-    outTimeHist << stop.tv_usec-start.tv_usec << "," << hdg << "," << rng << "," << temp << ",";
+    long int ms_stop = stop.tv_sec * 1000 + stop.tv_usec / 1000;
+    outTimeHist << ms_stop-ms_start << "," << hdg << "," << rng << "," << temp << ",";
     outTimeHist << optflow_intTime << "," << optflow_intX << "," << optflow_intY << ",";
     outTimeHist << optflow_intXgyro << "," << optflow_intYgyro << "," << optflow_intZgyro << ",";
     outTimeHist << optflow_quality << "," << optflow_timeDel << "," << optflow_dist << ",";
