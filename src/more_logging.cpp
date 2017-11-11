@@ -69,7 +69,7 @@ int main(int argc, char **argv)
   ros::NodeHandle dbl;
 
   ros::Subscriber rng = dbl.subscribe<sensor_msgs::Range>("mavros/rangefinder/rangefinder",1,rng_cb);
-  ros::Subscriber opt_flow = dbl.subscribe<mavros_msgs::OpticalFlowRad>("mavros/px4flow/raw/optical_flow_rad",1,opt_flow_cb);
+  ros::Subscriber opt_flow = dbl.subscribe<mavros_msgs::OpticalFlowRad>("px4flow/px4flow/raw/optical_flow_rad",1,opt_flow_cb);
   ros::Subscriber comp_hdg = dbl.subscribe<std_msgs::Float64>("mavros/global_position/compass_hdg",1,comp_hdg_cb);
   ros::Subscriber imu_data = dbl.subscribe<sensor_msgs::Imu>("mavros/imu/data",1,imu_data_cb);
   ros::Subscriber imu_temp = dbl.subscribe<sensor_msgs::Temperature>("mavros/imu/temperature",1,imu_temp_cb);
