@@ -47,7 +47,7 @@ void init_timeHist(std::string file_name)
 
   outTimeHist << "Time(ms), Hdg, Alt, Temp, optflow_intTime,optflow_intX,optflow_intY,optflow_intXgyro,";
   outTimeHist << "optflow_intYgyro,optflow_intZgyro,optflow_quality,optflow_timeDel,optflow_dist,";
-  outTimeHist << "imu_orientX,imu_orientY,imu_orientZ,imu_orientW,imu_angularX,imu_angularY,imu_angularZ";
+  outTimeHist << "imu_orientX,imu_orientY,imu_orientZ,imu_orientW,imu_angularX,imu_angularY,imu_angularZ,";
   outTimeHist << "imu_linAccelX,imu_linAccelY,imu_linAccelZ" << std::endl;
 
   outTimeHist.close();
