@@ -27,10 +27,10 @@
 	<!-- PX4Flow Node launcher -->
 
 	<node pkg="mavros" type="mavros_node" name="px4flow" required="true" clear_params="true" output="screen">
-		<param name="fcu_url" value="$(arg fcu_url)" />
+		<param name="fcu_url" value="$(arg flow_fcu" />
 		<param name="gcs_url" value="$(arg gcs_url)" />
-		<param name="target_system_id" value="$(arg tgt_system)" />
-		<param name="target_component_id" value="$(arg tgt_component)" />
+		<param name="target_system_id" value="$(arg flow_system)" />
+		<param name="target_component_id" value="$(arg flow_component)" />
 
 		<!-- remap mavlink topics -->
 		<remap from="/mavlink/to" to="/px4flow/mavlink_to" />
