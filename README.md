@@ -25,4 +25,14 @@ Install `mavros` from source using https://dev.px4.io/en/ros/mavros_installation
 
 Inside `catkin_ws`, run `catkin build`
 
+# Gazebo installation with ardupilot 
+
+first clone ardupilot:
+
+follow this [git hub post](https://github.com/ArduPilot/ardupilot_wiki/issues/1001) to install gazebo with ardupilot support
+
+follow this [tutorial](https://github.com/AS4SR/general_info/wiki/ArduPilot:-Instructions-to-set-up-and-run-an-autopilot-using-SITL-and-Gazebo-simulator) to clone ardupilot and get the drone running
+
+
+
 
