@@ -12,7 +12,7 @@ It then feeds commands to the Pixhawk 2 using MAVROS.
 
 # Clone instructions 
 
-Clone repository into a catkin workspace (typically a folder `src` called `catkin_ws`) 
+Clone repository into a catkin workspace (typically a folder `src` called `catkin_ws`) to set up catkin follow this [tutorial](http://wiki.ros.org/catkin/Tutorials/create_a_workspace) 
 1. In `catkin_ws/src`, run `git clone https://github.com/Texas-Aerial-Robotics/Controls-ROS.git`
 2. Becomes `catkin_ws/src/Controls-ROS/`
 
@@ -24,3 +24,5 @@ Install `mavros` from source using https://dev.px4.io/en/ros/mavros_installation
 # Build instructions 
 
 Inside `catkin_ws`, run `catkin build`
+
+
