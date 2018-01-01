@@ -8,6 +8,7 @@ project(flight_pkg)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  darknet_ros_msgs
   mavros
 )
 
@@ -66,10 +67,11 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+generate_messages(
+   DEPENDENCIES
+   std_msgs  # Or other packages containing msgs
+   darknet_ros_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -103,7 +105,8 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES flight_pkg
-#  CATKIN_DEPENDS mavros
+   CATKIN_DEPENDS mavros
+   darknet_ros_msgs
 #  DEPENDS system_lib
 )
 
@@ -151,6 +154,14 @@ target_link_libraries(loggingCV ${catkin_LIBRARIES})
 
 add_executable(days_before_logs src/more_logging.cpp)
 target_link_libraries(days_before_logs ${catkin_LIBRARIES})
+
+add_executable(takeoffNED src/nedTest.cpp)
+target_link_libraries(takeoffNED ${catkin_LIBRARIES})
+
+add_executable(darknetSub src/darknetSub.cpp)
+target_link_libraries(darknetSub ${catkin_LIBRARIES})
+
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use

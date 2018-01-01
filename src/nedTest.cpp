@@ -1,29 +1,18 @@
 /**
- * @file takeoff.cpp
- * @August 2017 Competition Flight Code
+ * @file nedTest.cpp
  */
 
 #include <fstream>
 
 #include <ros/ros.h>
 #include <mavros_msgs/CommandBool.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/State.h>
-#include <mavros_msgs/AttitudeTarget.h>
-#include <sensor_msgs/Range.h>
 
 mavros_msgs::State current_state;
 void state_cb(const mavros_msgs::State::ConstPtr& msg){
     current_state = *msg;
-}
-
-sensor_msgs::Range rngfnd;
-void rng_cb(const sensor_msgs::Range::ConstPtr& msg){
-    std::ofstream outRng("~/rng.log",std::ios::trunc);
-    rngfnd = *msg;
-    float rng = rngfnd.range;
-    outRng << rng;
-    outRng.close();
 }
 
 int main(int argc, char **argv)
@@ -32,10 +21,7 @@ int main(int argc, char **argv)
     ros::NodeHandle nh;
 
     ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>("mavros/state", 1, state_cb);
-    ros::Subscriber rng_sub = nh.subscribe<sensor_msgs::Range>("mavros/rangefinder/rangefinder",1,rng_cb);
-
-    ros::Publisher att_pub = nh.advertise<mavros_msgs::AttitudeTarget>("mavros/setpoint_raw/attitude", 10);
-
+    ros::Publisher local_pos_pub = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10);
     ros::ServiceClient arming_client = nh.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
     ros::ServiceClient set_mode_client = nh.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
 
@@ -48,29 +34,21 @@ int main(int argc, char **argv)
         rate.sleep();
     }
 
-    mavros_msgs::AttitudeTarget att;
-    att.orientation.x=0;
-    att.orientation.y=0;
-    att.orientation.z=0;
-    att.orientation.w=0;
-    att.body_rate.x=0;
-    att.body_rate.y=0;
-    att.body_rate.z=0;
-    att.thrust=.55;
-    
+    geometry_msgs::PoseStamped pose;
+    pose.pose.position.x = 0;
+    pose.pose.position.y = 0;
+    pose.pose.position.z = 2;
+
 
     //send a few setpoints before starting
     for(int i = 100; ros::ok() && i > 0; --i){
-	att_pub.publish(att);
+	local_pos_pub.publish(pose);
         ros::spinOnce();
         rate.sleep();
     }
 
     mavros_msgs::SetMode offb_set_mode;
-    offb_set_mode.request.custom_mode = "GUIDED_NOGPS";
-
-    mavros_msgs::SetMode alt_set_mode;
-    alt_set_mode.request.custom_mode = "LAND";
+    offb_set_mode.request.custom_mode = "GUIDED";
 
     mavros_msgs::CommandBool arm_cmd;
     arm_cmd.request.value = true;
@@ -78,14 +56,14 @@ int main(int argc, char **argv)
     ros::Time last_request = ros::Time::now();
 
     while(ros::ok()){
-        std::cout << att << std::endl;
-        if( current_state.mode == "ACRO" && (ros::Time::now() - last_request > ros::Duration(5.0))){
+      //std::cout << pose << std::endl;
+        if( current_state.mode != "GUIDED" && (ros::Time::now() - last_request > ros::Duration(5.0))){
             if( set_mode_client.call(offb_set_mode)){
                 ROS_INFO("Offboard enabled");
             }
             last_request = ros::Time::now();
         } else {
-            if( !current_state.armed && current_state.mode == "GUIDED_NOGPS" && (ros::Time::now() - last_request > ros::Duration(5.0))){
+            if( !current_state.armed && current_state.mode == "GUIDED" && (ros::Time::now() - last_request > ros::Duration(5.0))){
                 if( arming_client.call(arm_cmd) && arm_cmd.response.success){
                     ROS_INFO("Vehicle armed");
                 }
@@ -93,16 +71,10 @@ int main(int argc, char **argv)
             }
         }
 
-	att_pub.publish(att);
- 
-        if(rngfnd.range>1 && current_state.mode=="GUIDED_NOGPS"){
-            if(set_mode_client.call(alt_set_mode)){
-                ROS_INFO("land");
-            }
-        }
+	local_pos_pub.publish(pose);
 
-        ros::spinOnce();
-        rate.sleep();
+    ros::spinOnce();
+    rate.sleep();
     }
 
     return 0;
