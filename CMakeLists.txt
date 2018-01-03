@@ -212,6 +212,11 @@ target_link_libraries(darknetSub ${catkin_LIBRARIES})
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
 
+
+## Mark launchfiles for installation
+install(DIRECTORY launch/
+	DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
+)
 #############
 ## Testing ##
 #############
