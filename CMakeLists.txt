@@ -151,6 +151,15 @@ target_link_libraries(loggingCV ${catkin_LIBRARIES})
 
 add_executable(days_before_logs src/more_logging.cpp)
 target_link_libraries(days_before_logs ${catkin_LIBRARIES})
+
+add_executable(nedTest src/nedTest.cpp)
+target_link_libraries(nedTest ${catkin_LIBRARIES})
+
+add_executable(velTest src/velTest.cpp)
+target_link_libraries(velTest ${catkin_LIBRARIES})
+
+add_executable(hover src/hover.cpp)
+target_link_libraries(hover ${catkin_LIBRARIES})
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
