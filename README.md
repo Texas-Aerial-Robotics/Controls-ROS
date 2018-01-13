@@ -33,6 +33,29 @@ follow this [git hub post](https://github.com/ArduPilot/ardupilot_wiki/issues/10
 
 follow this [tutorial](https://github.com/AS4SR/general_info/wiki/ArduPilot:-Instructions-to-set-up-and-run-an-autopilot-using-SITL-and-Gazebo-simulator) to clone ardupilot and get the drone running
 
+# Better Gazebo Installation Instructions
 
+## Download ArduPilot
 
+In home directory:  
 
+`git clone git://github.com/ArduPilot/ardupilot.git  
+cd ardupilot  
+git submodule update --init --recursive`  
+
+Install some packages
+
+`sudo apt-get install python-matplotlib python-serial python-wxgtk3.0 python-wxtools python-lxml  
+sudo apt-get install python-scipy python-opencv ccache gawk git python-pip python-pexpect  
+sudo pip2 install future pymavlink MAVProxy`  
+
+Open to .bashrc:  
+
+`gedit .bashrc`  
+
+Add these lines to .bashrc:  
+`export PATH=$PATH:$HOME/ardupilot/Tools/autotest  
+export PATH=/usr/lib/ccache:$PATH`  
+
+Reload .bashrc:  
+`. .bashrc`
