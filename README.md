@@ -56,8 +56,50 @@ Open to .bashrc:
 `gedit .bashrc`  
 
 Add these lines to .bashrc:  
-~~~export PATH=$PATH:$HOME/ardupilot/Tools/autotest  
-export PATH=/usr/lib/ccache:$PATH~~~ 
+~~~
+export PATH=$PATH:$HOME/ardupilot/Tools/autotest  
+export PATH=/usr/lib/ccache:$PATH
+~~~ 
 
 Reload .bashrc:  
-`. .bashrc`
+`. .bashrc`  
+
+Run SITL once to set params:
+~~~
+cd ~/ardupilot/ArduCopter
+sim_vehicle.py -w
+~~~
+
+## Install Gazebo
+
+Install Gazebo:  
+
+`curl -ssL http://get.gazebosim.org | sh`  
+
+Get plugin for APM:
+
+~~~
+git clone https://github.com/SwiftGust/ardupilot_gazebo
+cd ardupilot_gazebo
+mkdir build
+cd build
+cmake ..
+make -j4
+sudo make install
+~~~
+
+Set paths for Models
+~~~
+echo 'export GAZEBO_MODEL_PATH=~/ardupilot_gazebo/gazebo_models' >> ~/.bashrc
+. .bashrc
+~~~
+
+# To Run Sim
+
+Run SITL:
+`sim_vehicle.py -j4 -f Gazebo`  
+
+Run Gazebo:
+`gazebo --verbose ~/ardupilot_gazebo/gazebo_models/iris_irlock_demo.world`  
+
+ROS connection string is `udp://127.0.0.1:14551@14555`
