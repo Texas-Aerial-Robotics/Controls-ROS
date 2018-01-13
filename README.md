@@ -103,3 +103,6 @@ Run Gazebo:
 `gazebo --verbose ~/ardupilot_gazebo/gazebo_models/iris_irlock_demo.world`  
 
 ROS connection string is `udp://127.0.0.1:14551@14555`
+
+Set parameters for sim in the same window after you run the sim_vehicle.py script. Do this my using command `param load <filename>`  
+Example params can be found in the Controls-Other repo.
