@@ -113,10 +113,10 @@ int main(int argc, char** argv)
 
 //right 
   pos.position.x = 0.0f;
-  pos.position.y = 0.5f;
+  pos.position.y = 0.05f;
   pos.position.z = 0.0f;
   pos.velocity.x = 0.0f;
-  pos.velocity.y = 0.005f;
+  pos.velocity.y = 0.0f;
   pos.velocity.z = 0.0f;
 
   if (set_vel_pub)
