@@ -45,17 +45,19 @@ git submodule update --init --recursive`
 
 Install some packages
 
-`sudo apt-get install python-matplotlib python-serial python-wxgtk3.0 python-wxtools python-lxml  
+~~~
+sudo apt-get install python-matplotlib python-serial python-wxgtk3.0 python-wxtools python-lxml  
 sudo apt-get install python-scipy python-opencv ccache gawk git python-pip python-pexpect  
 sudo pip2 install future pymavlink MAVProxy`  
+~~~
 
 Open to .bashrc:  
 
 `gedit .bashrc`  
 
 Add these lines to .bashrc:  
-`export PATH=$PATH:$HOME/ardupilot/Tools/autotest  
-export PATH=/usr/lib/ccache:$PATH`  
+~~~export PATH=$PATH:$HOME/ardupilot/Tools/autotest  
+export PATH=/usr/lib/ccache:$PATH~~~ 
 
 Reload .bashrc:  
 `. .bashrc`
