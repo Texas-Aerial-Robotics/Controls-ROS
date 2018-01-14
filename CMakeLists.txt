@@ -158,7 +158,7 @@ target_link_libraries(days_before_logs ${catkin_LIBRARIES})
 add_executable(takeoffNED src/nedTest.cpp)
 target_link_libraries(takeoffNED ${catkin_LIBRARIES})
 
-add_executable(darknetSub src/darknetSub.cpp)
+add_executable(darknetSub src/examples/darknetSub.cpp)
 target_link_libraries(darknetSub ${catkin_LIBRARIES})
 
 
