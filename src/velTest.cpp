@@ -113,7 +113,7 @@ int main(int argc, char** argv)
 
 //right 
   pos.position.x = 0.0f;
-  pos.position.y = 0.05f;
+  pos.position.y = 5.0f;
   pos.position.z = 0.0f;
   pos.velocity.x = 0.0f;
   pos.velocity.y = 0.0f;
@@ -133,10 +133,10 @@ int main(int argc, char** argv)
 
   //foreward
 
-  pos.position.x = 0.5f;
+  pos.position.x =  5.0f;
   pos.position.y = 0.0f;
   pos.position.z = 0.0f;
-  pos.velocity.x = 0.005f;
+  pos.velocity.x = 0.0f;
   pos.velocity.y = 0.0f;
   pos.velocity.z = 0.0f;
 
@@ -153,47 +153,47 @@ int main(int argc, char** argv)
   }
 
 
-  //left 
+  // //left 
 
-  pos.position.x = 0.0f;
-  pos.position.y = -0.5f;
-  pos.position.z = 0.0f;
-  pos.velocity.x = 0.0f;
-  pos.velocity.y = -0.005f;
-  pos.velocity.z = 0.0f;
+  // pos.position.x = 0.0f;
+  // pos.position.y = -0.5f;
+  // pos.position.z = 0.0f;
+  // pos.velocity.x = 0.0f;
+  // pos.velocity.y = 0.0f;
+  // pos.velocity.z = 0.0f;
 
-  if (set_vel_pub)
-  {
-    for (int i = 500; ros::ok() && i > 0; --i)
-    {
-      set_vel_pub.publish(pos);
-      ros::spinOnce();
-      // rate.sleep();
-      ros::Duration(0.01).sleep();
-    }
-    ROS_INFO("Done Left");
-  }
+  // if (set_vel_pub)
+  // {
+  //   for (int i = 500; ros::ok() && i > 0; --i)
+  //   {
+  //     set_vel_pub.publish(pos);
+  //     ros::spinOnce();
+  //     // rate.sleep();
+  //     ros::Duration(0.01).sleep();
+  //   }
+  //   ROS_INFO("Done Left");
+  // }
 
-  //back
+  // //back
 
-  pos.position.x = -0.5f;
-  pos.position.y = 0.0f;
-  pos.position.z = 0.0f;
-  pos.velocity.x = -0.005f;
-  pos.velocity.y = 0.0f;
-  pos.velocity.z = 0.0f;
+  // pos.position.x = -0.5f;
+  // pos.position.y = 0.0f;
+  // pos.position.z = 0.0f;
+  // pos.velocity.x = 0.0f;
+  // pos.velocity.y = 0.0f;
+  // pos.velocity.z = 0.0f;
 
-  if (set_vel_pub)
-  {
-    for (int i = 500; ros::ok() && i > 0; --i)
-    {
-      set_vel_pub.publish(pos);
-      ros::spinOnce();
-      // rate.sleep();
-      ros::Duration(0.01).sleep();
-    }
-    ROS_INFO("Done Back");
-  }
+  // if (set_vel_pub)
+  // {
+  //   for (int i = 500; ros::ok() && i > 0; --i)
+  //   {
+  //     set_vel_pub.publish(pos);
+  //     ros::spinOnce();
+  //     // rate.sleep();
+  //     ros::Duration(0.01).sleep();
+  //   }
+  //   ROS_INFO("Done Back");
+  // }
 
   // ros::ServiceClient land_client = nh.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/land");
   // mavros_msgs::CommandTOL srv_land{};
