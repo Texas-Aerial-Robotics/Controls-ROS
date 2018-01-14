@@ -94,6 +94,18 @@ echo 'export GAZEBO_MODEL_PATH=~/ardupilot_gazebo/gazebo_models' >> ~/.bashrc
 . .bashrc
 ~~~
 
+Add Gazebo Models
+
+~~~
+
+hg clone https://bitbucket.org/osrf/gazebo_models ~/gazebo_ws/gazebo_models
+cd ~/gazebo_ws/gazebo_models
+hg checkout zephyr_demos
+echo 'export GAZEBO_MODEL_PATH=~/gazebo_ws/gazebo_models' >> ~/.bashrc
+source ~/.bashrc
+
+~~~
+
 # To Run Sim
 
 Run SITL:
