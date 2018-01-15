@@ -51,24 +51,32 @@ int main(int argc, char** argv)
     //return -1;
   }
 
-   ros::ServiceClient set_mode_client = nh.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
+  ros::ServiceClient set_mode_client = nh.serviceClient<mavros_msgs::SetMode>("/mavros/set_mode");
+  mavros_msgs::SetMode srv_setMode;
+  srv_setMode.request.base_mode = 0;
+  srv_setMode.request.custom_mode = "GUIDED";
+  if(set_mode_client.call(srv_setMode)){
+    ROS_INFO("setmode send ok");
+  }else{
+    ROS_ERROR("Failed SetMode");
+    return -1;
+  }
 
-  // ros::ServiceClient takeoff_client = nh.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/takeoff");
-  // mavros_msgs::CommandTOL srv_takeoff;
-  // srv_takeoff.request.altitude = 605.0;
-  // srv_takeoff.request.latitude = -35.3632607;
-  // srv_takeoff.request.longitude = 149.1652351;
-  // srv_takeoff.request.min_pitch = 0;
-  // srv_takeoff.request.yaw = 0;
-  // if (takeoff_client.call(srv_takeoff) && srv_takeoff.response.success)
-  //   ROS_INFO("takeoff sent %d", srv_takeoff.response.success);
-  // else
-  // {
-  //   ROS_ERROR("Failed Takeoff");
-  //   return -1;
-  // }
+  ros::ServiceClient takeoff_cl = nh.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/takeoff");
+  mavros_msgs::CommandTOL srv_takeoff;
+  srv_takeoff.request.altitude = 5;
+  srv_takeoff.request.latitude = 0;
+  srv_takeoff.request.longitude = 0;
+  srv_takeoff.request.min_pitch = 0;
+  srv_takeoff.request.yaw = 0;
+  if(takeoff_cl.call(srv_takeoff)){
+    ROS_INFO("takeoff sent %d", srv_takeoff.response.success);
+  }else{
+    ROS_ERROR("Failed Takeoff");
+    return -1;
+  }
 
-  // sleep(5);
+  sleep(5);
 
   ros::Publisher set_vel_pub = nh.advertise<mavros_msgs::PositionTarget>("mavros/setpoint_raw/local", 10);
   mavros_msgs::PositionTarget pos;

@@ -158,6 +158,9 @@ target_link_libraries(nedTest ${catkin_LIBRARIES})
 add_executable(velTest src/velTest.cpp)
 target_link_libraries(velTest ${catkin_LIBRARIES})
 
+add_executable(staple src/staple.cpp)
+target_link_libraries(staple ${catkin_LIBRARIES})
+
 add_executable(hover src/hover.cpp)
 target_link_libraries(hover ${catkin_LIBRARIES})
 ## Rename C++ executable without prefix
