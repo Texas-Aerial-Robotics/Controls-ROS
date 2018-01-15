@@ -12,7 +12,7 @@ It then feeds commands to the Pixhawk 2 using MAVROS.
 
 # Clone instructions 
 
-Clone repository into a catkin workspace (typically a folder `src` called `catkin_ws`) to set up catkin follow this [tutorial](http://wiki.ros.org/catkin/Tutorials/create_a_workspace) 
+Clone repository into a catkin workspace (typically a folder `src` called `catkin_ws`). To set up catkin follow this [tutorial](http://wiki.ros.org/catkin/Tutorials/create_a_workspace) 
 1. In `catkin_ws/src`, run `git clone https://github.com/Texas-Aerial-Robotics/Controls-ROS.git`
 2. Becomes `catkin_ws/src/Controls-ROS/`
 
@@ -27,11 +27,11 @@ Inside `catkin_ws`, run `catkin build`
 
 # Gazebo installation with ardupilot 
 
-first clone ardupilot:
+First clone ardupilot:
 
-follow this [git hub post](https://github.com/ArduPilot/ardupilot_wiki/issues/1001) to install gazebo with ardupilot support
+Follow this [GitHub post](https://github.com/ArduPilot/ardupilot_wiki/issues/1001) to install gazebo with ardupilot support
 
-follow this [tutorial](https://github.com/AS4SR/general_info/wiki/ArduPilot:-Instructions-to-set-up-and-run-an-autopilot-using-SITL-and-Gazebo-simulator) to clone ardupilot and get the drone running
+Follow this [tutorial](https://github.com/AS4SR/general_info/wiki/ArduPilot:-Instructions-to-set-up-and-run-an-autopilot-using-SITL-and-Gazebo-simulator) to clone ardupilot and get the drone running
 
 # Better Gazebo Installation Instructions
 
@@ -39,21 +39,23 @@ follow this [tutorial](https://github.com/AS4SR/general_info/wiki/ArduPilot:-Ins
 
 In home directory:  
 
-`git clone git://github.com/ArduPilot/ardupilot.git  
+~~~
+git clone git://github.com/ArduPilot/ardupilot.git
 cd ardupilot  
-git submodule update --init --recursive`  
+git submodule update --init --recursive
+~~~
 
 Install some packages
 
 ~~~
 sudo apt-get install python-matplotlib python-serial python-wxgtk3.0 python-wxtools python-lxml  
 sudo apt-get install python-scipy python-opencv ccache gawk git python-pip python-pexpect  
-sudo pip2 install future pymavlink MAVProxy`  
+sudo pip2 install future pymavlink MAVProxy 
 ~~~
 
-Open to .bashrc:  
+Open ~/.bashrc:  
 
-`gedit .bashrc`  
+`gedit ~/.bashrc`  
 
 Add these lines to .bashrc:  
 ~~~
@@ -61,8 +63,8 @@ export PATH=$PATH:$HOME/ardupilot/Tools/autotest
 export PATH=/usr/lib/ccache:$PATH
 ~~~ 
 
-Reload .bashrc:  
-`. .bashrc`  
+Reload ~/.bashrc:  
+`. ~/.bashrc`  
 
 Run SITL once to set params:
 ~~~
@@ -103,7 +105,6 @@ cd ~/gazebo_ws/gazebo_models
 hg checkout zephyr_demos
 echo 'export GAZEBO_MODEL_PATH=~/gazebo_ws/gazebo_models' >> ~/.bashrc
 source ~/.bashrc
-
 ~~~
 
 # To Run Sim
