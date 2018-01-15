@@ -36,8 +36,8 @@ int main(int argc, char **argv)
     }
 
     geometry_msgs::PoseStamped pose;
-    pose.pose.position.x = 0;
-    pose.pose.position.y = 0;
+    pose.pose.position.x = 5;
+    pose.pose.position.y = 5;
     pose.pose.position.z = 3;
     pose.header.stamp = ros::Time::now();
     pose.header.frame_id = "map";
@@ -59,19 +59,19 @@ int main(int argc, char **argv)
     while(ros::ok())
     {
           //std::cout << pose << std::endl;
-            if( current_state.mode != "GUIDED" && (ros::Time::now() - last_request > ros::Duration(5.0))){
-                if( set_mode_client.call(offb_set_mode)){
-                    ROS_INFO("Offboard enabled");
-                }
-                last_request = ros::Time::now();
-            } else {
-                if( !current_state.armed && current_state.mode == "GUIDED" && (ros::Time::now() - last_request > ros::Duration(5.0))){
-                    if( arming_client.call(arm_cmd) && arm_cmd.response.success){
-                        ROS_INFO("Vehicle armed");
-                    }
-                    last_request = ros::Time::now();
-                }
-            }
+            // if( current_state.mode != "GUIDED" && (ros::Time::now() - last_request > ros::Duration(5.0))){
+            //     if( set_mode_client.call(offb_set_mode)){
+            //         ROS_INFO("Offboard enabled");
+            //     }
+            //     last_request = ros::Time::now();
+            // } else {
+            //     if( !current_state.armed && current_state.mode == "GUIDED" && (ros::Time::now() - last_request > ros::Duration(5.0))){
+            //         if( arming_client.call(arm_cmd) && arm_cmd.response.success){
+            //             ROS_INFO("Vehicle armed");
+            //         }
+            //         last_request = ros::Time::now();
+            //     }
+            // }
 
     	local_pos_pub.publish(pose);
 
