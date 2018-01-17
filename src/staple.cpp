@@ -1,5 +1,7 @@
+#include <iostream>
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
+#include "std_msgs/Float64.h"
 #include <mavros_msgs/CommandBool.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/State.h>
@@ -8,10 +10,18 @@
 #include <geometry_msgs/Pose2D.h>
 #include <mavros_msgs/CommandTOL.h>
 #include <time.h>
+#include <cmath>
+#include <math.h>
 #include <ros/duration.h>
+
+using namespace std;
 
 mavros_msgs::State current_state;
 geometry_msgs::PoseStamped current_pose;
+geometry_msgs::PoseStamped pose;
+std_msgs::Float64 current_heading;
+float GYM_OFFSET;
+
 void state_cb(const mavros_msgs::State::ConstPtr& msg)
 {
   current_state = *msg;
@@ -21,9 +31,39 @@ void state_cb(const mavros_msgs::State::ConstPtr& msg)
 void pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg) 
 {
 	current_pose = *msg;
-	ROS_INFO("x: %f", current_pose.pose.position.x);
-	ROS_INFO("y: %f", current_pose.pose.position.y);
-	ROS_INFO("z: %f", current_pose.pose.position.z);
+	// ROS_INFO("x: %f", current_pose.pose.position.x);
+	// ROS_INFO("y: %f", current_pose.pose.position.y);
+	// ROS_INFO("z: %f", current_pose.pose.position.z);
+}
+void heading_cb(const std_msgs::Float64::ConstPtr& msg)
+{
+  current_heading = *msg;
+  ROS_INFO("current heading: %f", current_heading.data);
+}
+void setHeading(float heading)
+{
+  heading = -heading + 90;
+  float yaw = heading*(M_PI/180);
+  float pitch = 0;
+  float roll = 0;
+
+  float cy = cos(yaw * 0.5);
+  float sy = sin(yaw * 0.5);
+  float cr = cos(roll * 0.5);
+  float sr = sin(roll * 0.5);
+  float cp = cos(pitch * 0.5);
+  float sp = sin(pitch * 0.5);
+
+  float qw = cy * cr * cp + sy * sr * sp;
+  float qx = cy * sr * cp - sy * cr * sp;
+  float qy = cy * cr * sp + sy * sr * cp;
+  float qz = sy * cr * cp - cy * sr * sp;
+
+  pose.pose.orientation.w = qw;
+  pose.pose.orientation.x = qx;
+  pose.pose.orientation.y = qy;
+  pose.pose.orientation.z = qz;
+
 }
 
 int main(int argc, char** argv)
@@ -35,6 +75,26 @@ int main(int argc, char** argv)
   ros::Rate rate(20.0);
 
   ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>("mavros/state", 10, state_cb);
+  ros::Publisher set_vel_pub = nh.advertise<mavros_msgs::PositionTarget>("mavros/setpoint_raw/local", 10);
+  ros::Publisher local_pos_pub = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10);
+  ros::Subscriber currentPos = nh.subscribe<geometry_msgs::PoseStamped>("/mavros/local_position/pose", 10, pose_cb);
+  ros::Subscriber currentHeading = nh.subscribe<std_msgs::Float64>("/mavros/global_position/compass_hdg", 10, heading_cb);
+
+  // allow the subscribers to initialize
+  for(int i=0; i<1000; i++)
+  {
+    ros::spinOnce();
+    ros::Duration(0.01).sleep();
+  }
+  
+
+  pose.pose.position.x = 0;
+  pose.pose.position.y = 8;
+  pose.pose.position.z = 3;
+  GYM_OFFSET = current_heading.data;
+  ROS_INFO("the N' axis is facing: %f", GYM_OFFSET);
+  cout << current_heading << "\n" << endl;
+  setHeading(GYM_OFFSET);
   // wait for FCU connection
   while (ros::ok() && !current_state.connected)
   {
@@ -75,46 +135,10 @@ int main(int argc, char** argv)
     return -1;
   }
 
-  sleep(5);
+  sleep(10);
 
-  ros::Publisher set_vel_pub = nh.advertise<mavros_msgs::PositionTarget>("mavros/setpoint_raw/local", 10);
-  ros::Publisher local_pos_pub = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10);
-  ros::Subscriber currentPos = nh.subscribe<geometry_msgs::PoseStamped>("/mavros/local_position/pose", 10, pose_cb);
-  mavros_msgs::PositionTarget pos;
-  pos.coordinate_frame = mavros_msgs::PositionTarget::FRAME_BODY_NED;
-
-	geometry_msgs::PoseStamped pose;
-	pose.pose.position.x = 0;
-	pose.pose.position.y = 8;
-	pose.pose.position.z = 3;
-
-  pos.type_mask = mavros_msgs::PositionTarget::IGNORE_AFX | mavros_msgs::PositionTarget::IGNORE_AFY | mavros_msgs::PositionTarget::IGNORE_AFZ | mavros_msgs::PositionTarget::IGNORE_YAW | mavros_msgs::PositionTarget::IGNORE_YAW_RATE;
+  setHeading(45);
   
- 
-  // pos.position.x = 0.0f;
-  // pos.position.y = 0.0f;
-  // pos.position.z = 0.0f;
-  // pos.acceleration_or_force.x = 0.0f;
-  // pos.acceleration_or_force.y = 0.0f;
-  // pos.acceleration_or_force.z = 0.0f;
-
-  // pos.velocity.x = 0.0f;
-  // pos.velocity.y = 0.0f;
-  // pos.velocity.z = 0.0;
-  // pos.yaw_rate = 0.0f;
-  // if (set_vel_pub)
-  // {
-  //   ROS_INFO("zero velocity");
-  //   for (int i = 1000; ros::ok() && i > 0; --i)
-  //   {
-  //     set_vel_pub.publish(pos);
-  //     ros::spinOnce();
-  //     // rate.sleep();
-  //     ros::Duration(0.01).sleep();
-  //   }
-  //   ROS_INFO("Done with zero velocity set");
-  // }
-
   //ros::ServiceClient set_mode_client = nh.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
   mavros_msgs::SetMode offb_set_mode;
   offb_set_mode.request.custom_mode = "GUIDED";
@@ -148,7 +172,7 @@ int main(int argc, char** argv)
       }
       ros::spinOnce();
       // rate.sleep();
-      ros::Duration(0.01).sleep();
+      ros::Duration(0.2).sleep();
     }
     ROS_INFO("Done side");
   }
