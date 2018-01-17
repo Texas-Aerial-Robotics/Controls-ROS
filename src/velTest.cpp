@@ -14,14 +14,61 @@
 #include <mavros_msgs/CommandTOL.h>
 #include <time.h>
 #include <ros/duration.h>
+#include <cmath>
 
 mavros_msgs::State current_state;
+geometry_msgs::PoseStamped current_pose;
+
+const float POSITION_TOLERANCE = 0.5;
+
 void state_cb(const mavros_msgs::State::ConstPtr& msg)
 {
   current_state = *msg;
   bool connected = current_state.connected;
   bool armed = current_state.armed;
 }
+
+void pose_cb(const geometry_msgs::PoseStamped::ConstPtr pose){
+  current_pose = *pose;
+}
+
+float get_distance(double x1, double y1, double z1, double x2, double y2, double z2){
+  return sqrt(pow(x1-x2, 2) + pow(y1-y2, 2) + pow(z1-z2, 2));
+}
+
+bool go_to_position(ros::NodeHandle* nh, float x, float y, float z){
+  ros::Publisher set_pos_pub = nh->advertise<mavros_msgs::PositionTarget>("mavros/setpoint_raw/local", 10);
+  mavros_msgs::PositionTarget pos;
+  pos.coordinate_frame = mavros_msgs::PositionTarget::FRAME_BODY_NED;
+
+  pos.type_mask = mavros_msgs::PositionTarget::IGNORE_AFX | mavros_msgs::PositionTarget::IGNORE_AFY | mavros_msgs::PositionTarget::IGNORE_AFZ | mavros_msgs::PositionTarget::IGNORE_YAW | mavros_msgs::PositionTarget::IGNORE_YAW_RATE;
+  pos.position.x = x;
+  pos.position.y = y;
+  pos.position.z = z;
+
+  pos.yaw_rate = 0.0f;
+
+  if (set_pos_pub)
+  {
+    ROS_INFO("zero velocity");
+    // for (int i = 5000; ros::ok() && i > 0; --i)
+    // {
+    //   set_pos_pub.publish(pos);
+    //   ros::spinOnce();
+    //   // rate.sleep();
+    //   ros::Duration(0.01).sleep();
+    // }
+    while(get_distance(x,y,z,current_pose.pose.position.x, current_pose.pose.position.y, current_pose.pose.position.z) > POSITION_TOLERANCE){
+      set_pos_pub.publish(pos);
+      ros::spinOnce();
+      // rate.sleep();
+      ros::Duration(0.01).sleep();
+    }
+
+    ROS_INFO("Done with zero velocity set");
+  }
+}
+
 
 int main(int argc, char** argv)
 {
@@ -32,6 +79,7 @@ int main(int argc, char** argv)
   ros::Rate rate(20.0);
 
   ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>("mavros/state", 10, state_cb);
+  ros::Subscriber pose_sub = nh.subscribe<geometry_msgs::PoseStamped>("local_position/pose", 10, pose_cb);
   // wait for FCU connection
   while (ros::ok() && !current_state.connected)
   {
@@ -53,51 +101,23 @@ int main(int argc, char** argv)
 
    ros::ServiceClient set_mode_client = nh.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
 
-  // ros::ServiceClient takeoff_client = nh.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/takeoff");
-  // mavros_msgs::CommandTOL srv_takeoff;
-  // srv_takeoff.request.altitude = 605.0;
-  // srv_takeoff.request.latitude = -35.3632607;
-  // srv_takeoff.request.longitude = 149.1652351;
-  // srv_takeoff.request.min_pitch = 0;
-  // srv_takeoff.request.yaw = 0;
-  // if (takeoff_client.call(srv_takeoff) && srv_takeoff.response.success)
-  //   ROS_INFO("takeoff sent %d", srv_takeoff.response.success);
-  // else
-  // {
-  //   ROS_ERROR("Failed Takeoff");
-  //   return -1;
-  // }
-
-  // sleep(5);
-
-  ros::Publisher set_vel_pub = nh.advertise<mavros_msgs::PositionTarget>("mavros/setpoint_raw/local", 10);
-  mavros_msgs::PositionTarget pos;
-  pos.coordinate_frame = mavros_msgs::PositionTarget::FRAME_BODY_NED;
-
-  pos.type_mask = mavros_msgs::PositionTarget::IGNORE_AFX | mavros_msgs::PositionTarget::IGNORE_AFY | mavros_msgs::PositionTarget::IGNORE_AFZ | mavros_msgs::PositionTarget::IGNORE_YAW | mavros_msgs::PositionTarget::IGNORE_YAW_RATE;
-  pos.position.x = 0.0f;
-  pos.position.y = 0.0f;
-  pos.position.z = 0.0f;
-  pos.acceleration_or_force.x = 0.0f;
-  pos.acceleration_or_force.y = 0.0f;
-  pos.acceleration_or_force.z = 0.0f;
-
-  pos.velocity.x = 0.0f;
-  pos.velocity.y = 0.0f;
-  pos.velocity.z = 0.0;
-  pos.yaw_rate = 0.0f;
-  if (set_vel_pub)
+  ros::ServiceClient takeoff_client = nh.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/takeoff");
+  mavros_msgs::CommandTOL srv_takeoff;
+  srv_takeoff.request.altitude = 605.0;
+  srv_takeoff.request.latitude = -35.3632607;
+  srv_takeoff.request.longitude = 149.1652351;
+  srv_takeoff.request.min_pitch = 0;
+  srv_takeoff.request.yaw = 0;
+  if (takeoff_client.call(srv_takeoff) && srv_takeoff.response.success)
+    ROS_INFO("takeoff sent %d", srv_takeoff.response.success);
+  else
   {
-    ROS_INFO("zero velocity");
-    for (int i = 100; ros::ok() && i > 0; --i)
-    {
-      set_vel_pub.publish(pos);
-      ros::spinOnce();
-      // rate.sleep();
-      ros::Duration(0.01).sleep();
-    }
-    ROS_INFO("Done with zero velocity set");
+    ROS_ERROR("Failed Takeoff");
+    return -1;
   }
+
+  sleep(5);
+
 
   //ros::ServiceClient set_mode_client = nh.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
   mavros_msgs::SetMode offb_set_mode;
@@ -110,47 +130,71 @@ int main(int argc, char** argv)
     return -1;
   }
 
+  ROS_INFO("Going to position 1");
+
+  go_to_position(&nh, 10, 10, 10);
+
+  ros::Duration(5.0).sleep();
+
+  ROS_INFO("Going to position 2");
+
+  go_to_position(&nh, -10, 10, 10);
+  ros::Duration(5.0).sleep();
+
+  ROS_INFO("Going to position 3");
+
+  go_to_position(&nh, -10, -10, 10);
+  ros::Duration(5.0).sleep();
+
+  ROS_INFO("Going to position 4");
+
+  go_to_position(&nh, 10, -10, 10);
+  ros::Duration(5.0).sleep();
+
+  ROS_INFO("Going to position 5");
+
+  go_to_position(&nh, 0, 0, 10);
 
 //right 
-  pos.position.x = 0.0f;
-  pos.position.y = 5.0f;
-  pos.position.z = 0.0f;
-  pos.velocity.x = 0.0f;
-  pos.velocity.y = 0.0f;
-  pos.velocity.z = 0.0f;
+  // pos.position.x = 0.0f;
+  // pos.position.y = 5.0f;
+  // pos.position.z = 0.0f;
+  // pos.velocity.x = 0.0f;
+  // pos.velocity.y = 0.0f;
+  // pos.velocity.z = 0.0f;
 
-  if (set_vel_pub)
-  {
-    for (int i = 500; ros::ok() && i > 0; --i)
-    {
-      set_vel_pub.publish(pos);
-      ros::spinOnce();
-      // rate.sleep();
-      ros::Duration(0.01).sleep();
-    }
-    ROS_INFO("Done Right");
-  }
+  // if (set_vel_pub)
+  // {
+  //   for (int i = 500; ros::ok() && i > 0; --i)
+  //   {
+  //     set_vel_pub.publish(pos);
+  //     ros::spinOnce();
+  //     // rate.sleep();
+  //     ros::Duration(0.01).sleep();
+  //   }
+  //   ROS_INFO("Done Right");
+  // }
 
-  //foreward
+  // //foreward
 
-  pos.position.x =  5.0f;
-  pos.position.y = 0.0f;
-  pos.position.z = 0.0f;
-  pos.velocity.x = 0.0f;
-  pos.velocity.y = 0.0f;
-  pos.velocity.z = 0.0f;
+  // pos.position.x =  5.0f;
+  // pos.position.y = 0.0f;
+  // pos.position.z = 0.0f;
+  // pos.velocity.x = 0.0f;
+  // pos.velocity.y = 0.0f;
+  // pos.velocity.z = 0.0f;
 
-  if (set_vel_pub)
-  {
-    for (int i = 500; ros::ok() && i > 0; --i)
-    {
-      set_vel_pub.publish(pos);
-      ros::spinOnce();
-      // rate.sleep();
-      ros::Duration(0.01).sleep();
-    }
-    ROS_INFO("Done Foreward");
-  }
+  // if (set_vel_pub)
+  // {
+  //   for (int i = 500; ros::ok() && i > 0; --i)
+  //   {
+  //     set_vel_pub.publish(pos);
+  //     ros::spinOnce();
+  //     // rate.sleep();
+  //     ros::Duration(0.01).sleep();
+  //   }
+  //   ROS_INFO("Done Foreward");
+  // }
 
 
   // //left 
