@@ -161,6 +161,8 @@ target_link_libraries(takeoffNED ${catkin_LIBRARIES})
 add_executable(darknetSub src/examples/darknetSub.cpp)
 target_link_libraries(darknetSub ${catkin_LIBRARIES})
 
+add_executable(setHome src/setHome.cpp)
+target_link_libraries(setHome ${catkin_LIBRARIES})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
