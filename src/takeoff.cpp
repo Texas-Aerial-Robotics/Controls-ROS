@@ -78,7 +78,7 @@ int main(int argc, char **argv)
     ros::Time last_request = ros::Time::now();
 
     while(ros::ok()){
-//        std::cout << current_state.mode << std::endl;
+        std::cout << att << std::endl;
         if( current_state.mode == "ACRO" && (ros::Time::now() - last_request > ros::Duration(5.0))){
             if( set_mode_client.call(offb_set_mode)){
                 ROS_INFO("Offboard enabled");
