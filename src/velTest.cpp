@@ -19,16 +19,18 @@
 mavros_msgs::State current_state;
 geometry_msgs::PoseStamped current_pose;
 
-const float POSITION_TOLERANCE = 0.5;
+const float POSITION_TOLERANCE = 5;
 
 void state_cb(const mavros_msgs::State::ConstPtr& msg)
 {
+  // ROS_INFO("I'm in state_cb!");
   current_state = *msg;
   bool connected = current_state.connected;
   bool armed = current_state.armed;
 }
 
 void pose_cb(const geometry_msgs::PoseStamped::ConstPtr pose){
+  // ROS_INFO("I'm in pose_cb!");
   current_pose = *pose;
 }
 
@@ -41,11 +43,20 @@ bool go_to_position(ros::NodeHandle* nh, float x, float y, float z){
   mavros_msgs::PositionTarget pos;
   pos.coordinate_frame = mavros_msgs::PositionTarget::FRAME_BODY_NED;
 
-  pos.type_mask = mavros_msgs::PositionTarget::IGNORE_AFX | mavros_msgs::PositionTarget::IGNORE_AFY | mavros_msgs::PositionTarget::IGNORE_AFZ | mavros_msgs::PositionTarget::IGNORE_YAW | mavros_msgs::PositionTarget::IGNORE_YAW_RATE;
+  pos.type_mask = mavros_msgs::PositionTarget::IGNORE_AFX | 
+              mavros_msgs::PositionTarget::IGNORE_AFY | 
+              mavros_msgs::PositionTarget::IGNORE_AFZ | 
+              mavros_msgs::PositionTarget::IGNORE_YAW | 
+              mavros_msgs::PositionTarget::IGNORE_YAW_RATE | 
+              mavros_msgs::PositionTarget::IGNORE_VX | 
+              mavros_msgs::PositionTarget::IGNORE_VY | 
+              mavros_msgs::PositionTarget::IGNORE_VZ;
   pos.position.x = x;
   pos.position.y = y;
   pos.position.z = z;
-
+  // pos.velocity.x = 10.0f;
+  // pos.velocity.y = 0.0f;
+  // pos.velocity.z = 0.0f;
   pos.yaw_rate = 0.0f;
 
   if (set_pos_pub)
@@ -58,7 +69,17 @@ bool go_to_position(ros::NodeHandle* nh, float x, float y, float z){
     //   // rate.sleep();
     //   ros::Duration(0.01).sleep();
     // }
-    while(get_distance(x,y,z,current_pose.pose.position.x, current_pose.pose.position.y, current_pose.pose.position.z) > POSITION_TOLERANCE){
+
+    printf("Going to position: %f, %f, %f\n", pos.position.x,pos.position.y, pos.position.z);
+
+    while(ros::ok() && get_distance(x,y,z,current_pose.pose.position.x, current_pose.pose.position.y, current_pose.pose.position.z) > POSITION_TOLERANCE){
+      float distance = get_distance(x,y,z,current_pose.pose.position.x, current_pose.pose.position.y, current_pose.pose.position.z);
+
+      // printf("Current position: %f,%f,%f. Distance: %f\n", 
+      //               current_pose.pose.position.x, 
+      //               current_pose.pose.position.y, 
+      //               current_pose.pose.position.z, 
+      //               distance);
       set_pos_pub.publish(pos);
       ros::spinOnce();
       // rate.sleep();
@@ -79,7 +100,7 @@ int main(int argc, char** argv)
   ros::Rate rate(20.0);
 
   ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>("mavros/state", 10, state_cb);
-  ros::Subscriber pose_sub = nh.subscribe<geometry_msgs::PoseStamped>("local_position/pose", 10, pose_cb);
+  ros::Subscriber pose_sub = nh.subscribe<geometry_msgs::PoseStamped>("mavros/local_position/pose", 10, pose_cb);
   // wait for FCU connection
   while (ros::ok() && !current_state.connected)
   {
@@ -100,25 +121,6 @@ int main(int argc, char** argv)
   }
 
    ros::ServiceClient set_mode_client = nh.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
-
-  ros::ServiceClient takeoff_client = nh.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/takeoff");
-  mavros_msgs::CommandTOL srv_takeoff;
-  srv_takeoff.request.altitude = 605.0;
-  srv_takeoff.request.latitude = -35.3632607;
-  srv_takeoff.request.longitude = 149.1652351;
-  srv_takeoff.request.min_pitch = 0;
-  srv_takeoff.request.yaw = 0;
-  if (takeoff_client.call(srv_takeoff) && srv_takeoff.response.success)
-    ROS_INFO("takeoff sent %d", srv_takeoff.response.success);
-  else
-  {
-    ROS_ERROR("Failed Takeoff");
-    return -1;
-  }
-
-  sleep(5);
-
-
   //ros::ServiceClient set_mode_client = nh.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
   mavros_msgs::SetMode offb_set_mode;
   offb_set_mode.request.custom_mode = "GUIDED";
@@ -130,30 +132,51 @@ int main(int argc, char** argv)
     return -1;
   }
 
+  sleep(5)
+
+  ros::ServiceClient takeoff_client = nh.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/takeoff");
+  mavros_msgs::CommandTOL srv_takeoff;
+  srv_takeoff.request.altitude = 2;
+  // srv_takeoff.request.latitude = -35.3632607;
+  // srv_takeoff.request.longitude = 149.1652351;
+  srv_takeoff.request.min_pitch = 0;
+  srv_takeoff.request.yaw = 0;
+  if (takeoff_client.call(srv_takeoff) && srv_takeoff.response.success)
+    ROS_INFO("takeoff sent %d", srv_takeoff.response.success);
+  else
+  {
+    ROS_ERROR("Failed Takeoff");
+    return -1;
+  }
+
+  sleep(10);
+
+
+
   ROS_INFO("Going to position 1");
 
-  go_to_position(&nh, 10, 10, 10);
+  go_to_position(&nh, 5,5,0);
 
   ros::Duration(5.0).sleep();
 
   ROS_INFO("Going to position 2");
 
-  go_to_position(&nh, -10, 10, 10);
+  go_to_position(&nh, -5,0,0);
   ros::Duration(5.0).sleep();
 
   ROS_INFO("Going to position 3");
 
-  go_to_position(&nh, -10, -10, 10);
+  go_to_position(&nh, 0,-5, 0);
   ros::Duration(5.0).sleep();
 
   ROS_INFO("Going to position 4");
 
-  go_to_position(&nh, 10, -10, 10);
+  go_to_position(&nh, 5, 0, 0);
   ros::Duration(5.0).sleep();
 
   ROS_INFO("Going to position 5");
 
-  go_to_position(&nh, 0, 0, 10);
+  go_to_position(&nh, 0, 5, 0);
 
 //right 
   // pos.position.x = 0.0f;
