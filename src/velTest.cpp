@@ -121,6 +121,7 @@ int main(int argc, char** argv)
   }
 
    ros::ServiceClient set_mode_client = nh.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
+
   //ros::ServiceClient set_mode_client = nh.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
   mavros_msgs::SetMode offb_set_mode;
   offb_set_mode.request.custom_mode = "GUIDED";
