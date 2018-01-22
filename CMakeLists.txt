@@ -155,8 +155,17 @@ target_link_libraries(loggingCV ${catkin_LIBRARIES})
 add_executable(days_before_logs src/more_logging.cpp)
 target_link_libraries(days_before_logs ${catkin_LIBRARIES})
 
-add_executable(takeoffNED src/nedTest.cpp)
-target_link_libraries(takeoffNED ${catkin_LIBRARIES})
+add_executable(nedTest src/nedTest.cpp)
+target_link_libraries(nedTest ${catkin_LIBRARIES})
+
+add_executable(velTest src/velTest.cpp)
+target_link_libraries(velTest ${catkin_LIBRARIES})
+
+add_executable(staple src/staple.cpp)
+target_link_libraries(staple ${catkin_LIBRARIES})
+
+add_executable(hover src/hover.cpp)
+target_link_libraries(hover ${catkin_LIBRARIES})
 
 add_executable(darknetSub src/examples/darknetSub.cpp)
 target_link_libraries(darknetSub ${catkin_LIBRARIES})
