@@ -8,7 +8,7 @@ project(flight_pkg)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  darknet_ros_msgs
+
   mavros
 )
 
@@ -70,7 +70,7 @@ find_package(catkin REQUIRED COMPONENTS
 generate_messages(
    DEPENDENCIES
    std_msgs  # Or other packages containing msgs
-   darknet_ros_msgs
+ 
 )
 
 ################################################
@@ -106,7 +106,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES flight_pkg
    CATKIN_DEPENDS mavros
-   darknet_ros_msgs
+ 
 #  DEPENDS system_lib
 )
 
@@ -167,8 +167,8 @@ target_link_libraries(staple ${catkin_LIBRARIES})
 add_executable(hover src/hover.cpp)
 target_link_libraries(hover ${catkin_LIBRARIES})
 
-add_executable(darknetSub src/examples/darknetSub.cpp)
-target_link_libraries(darknetSub ${catkin_LIBRARIES})
+#add_executable(darknetSub src/examples/darknetSub.cpp)
+#target_link_libraries(darknetSub ${catkin_LIBRARIES})
 
 add_executable(setHome src/setHome.cpp)
 target_link_libraries(setHome ${catkin_LIBRARIES})
