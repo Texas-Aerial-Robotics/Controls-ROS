@@ -1,0 +1,43 @@
+<launch>
+	<!-- vim: set ft=xml noet : -->
+	<!-- Experimental launch script for APM based Drone -->
+	<!-- with optical flow sensor -->
+
+	<arg name="fcu_url" default="/dev/ttyS0:921600" />
+	<arg name="gcs_url" default="" />
+	<arg name="tgt_system" default="1" />
+	<arg name="tgt_component" default="1" />
+	<arg name="log_output" default="screen" />
+
+	<arg name="flow_fcu" default="serial:///dev/ttyS0:921600" />
+	<arg name="flow_system" default="81" />
+	<arg name="flow_component" default="50" />
+
+	<include file="$(find mavros)/launch/node.launch">
+		<arg name="pluginlists_yaml" value="$(find mavros)/launch/apm_pluginlists.yaml" />
+		<arg name="config_yaml" value="$(find mavros)/launch/apm_config.yaml" />
+
+		<arg name="fcu_url" value="$(arg fcu_url)" />
+		<arg name="gcs_url" value="$(arg gcs_url)" />
+		<arg name="tgt_system" value="$(arg tgt_system)" />
+		<arg name="tgt_component" value="$(arg tgt_component)" />
+		<arg name="log_output" value="$(arg log_output)" />
+	</include>
+
+	<!-- PX4Flow Node launcher -->
+
+	<node pkg="mavros" type="mavros_node" name="px4flow" required="true" clear_params="true" output="screen">
+		<param name="fcu_url" value="$(arg flow_fcu" />
+		<param name="gcs_url" value="$(arg gcs_url)" />
+		<param name="target_system_id" value="$(arg flow_system)" />
+		<param name="target_component_id" value="$(arg flow_component)" />
+
+		<!-- remap mavlink topics -->
+		<remap from="/mavlink/to" to="/px4flow/mavlink_to" />
+		<remap from="/mavlink/from" to="/px4flow/mavlink_from" />
+
+		<!-- load blacklist,config -->
+		<rosparam command="load" file="$(find mavros_extras)/launch/px4flow_pluginlists.yaml" />
+		<rosparam command="load" file="$(find mavros_extras)/launch/px4flow_config.yaml" />
+	</node>
+</launch>

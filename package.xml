@@ -41,8 +41,9 @@
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>mavros</build_depend>
+  <build_depend>darknet_ros_msgs</build_depend>
   <run_depend>mavros</run_depend>
-
+  <run_depend>darknet_ros_msgs</run_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
