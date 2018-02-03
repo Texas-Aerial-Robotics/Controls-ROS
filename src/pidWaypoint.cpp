@@ -1,7 +1,7 @@
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
-#include <nav_msgs/PoseWithCovarianceStamped.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <mavros_msgs/CommandBool.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/State.h>
@@ -13,13 +13,13 @@
 #include <cmath>
 
 mavros_msgs::State current_state;
-nav_msgs::PoseWithCovarianceStamped current_pose;
+geometry_msgs::PoseStamped current_pose;
 
 const float POSITION_TOLERANCE = 0.1;
 const float ON_TARGET_THRESHOLD = 20;
 
 const float p = 0.2f;
-const float i = 0.0f;
+const float i = 0.0;//005f;
 const float d = 0.0f;
 
 
@@ -31,7 +31,7 @@ void state_cb(const mavros_msgs::State::ConstPtr& msg)
   bool armed = current_state.armed;
 }
 
-void pose_cb(const nav_msgs::PoseWithCovarianceStamped::ConstPtr pose){
+void pose_cb(const geometry_msgs::PoseStamped::ConstPtr pose){
   // ROS_INFO("I'm in pose_cb!");
   current_pose = *pose;
 }
@@ -56,17 +56,17 @@ void go_to_position_pid(ros::NodeHandle* nh, float x, float y, float z){
     float accumulatedErrorZ = 0;
 
     while(true){
-      float distance = get_distance(x,y,z,current_pose.pose.pose.position.x, current_pose.pose.pose.position.y, current_pose.pose.pose.position.z);
+      float distance = get_distance(x,y,z,current_pose.pose.position.x, current_pose.pose.position.y, current_pose.pose.position.z);
 
       printf("Current position: %f,%f,%f. Distance: %f\n", 
-                    current_pose.pose.pose.position.x, 
-                    current_pose.pose.pose.position.y, 
-                    current_pose.pose.pose.position.z, 
+                    current_pose.pose.position.x, 
+                    current_pose.pose.position.y, 
+                    current_pose.pose.position.z, 
                     distance);
 
-      float errorX = x - current_pose.pose.pose.position.x;
-      float errorY = y - current_pose.pose.pose.position.y;
-      float errorZ = z - current_pose.pose.pose.position.z;
+      float errorX = x - current_pose.pose.position.x;
+      float errorY = y - current_pose.pose.position.y;
+      float errorZ = z - current_pose.pose.position.z;
 
       accumulatedErrorX += errorX;
       accumulatedErrorY += errorY;
@@ -134,7 +134,7 @@ int main(int argc, char** argv)
   ros::Rate rate(20.0);
 
   ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>("mavros/state", 10, state_cb);
-  ros::Subscriber pose_sub = nh.subscribe<nav_msgs::PoseWithCovarianceStamped>("mavros/global_position/local", 10, pose_cb);
+  ros::Subscriber pose_sub = nh.subscribe<geometry_msgs::PoseStamped>("mavros/local_position/pose", 10, pose_cb);
   // wait for FCU connection
   while (ros::ok() && !current_state.connected)
   {
