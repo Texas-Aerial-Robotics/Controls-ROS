@@ -8,7 +8,6 @@ project(flight_pkg)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  darknet_ros_msgs
   mavros
 )
 
@@ -67,11 +66,10 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-   DEPENDENCIES
-   std_msgs  # Or other packages containing msgs
-   darknet_ros_msgs
-)
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs  # Or other packages containing msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -105,8 +103,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES flight_pkg
-   CATKIN_DEPENDS mavros
-   darknet_ros_msgs
+#  CATKIN_DEPENDS mavros
 #  DEPENDS system_lib
 )
 
@@ -161,18 +158,14 @@ target_link_libraries(nedTest ${catkin_LIBRARIES})
 add_executable(velTest src/velTest.cpp)
 target_link_libraries(velTest ${catkin_LIBRARIES})
 
+add_executable(pidWaypoint src/pidWaypoint.cpp)
+target_link_libraries(pidWaypoint ${catkin_LIBRARIES})
+
 add_executable(staple src/staple.cpp)
 target_link_libraries(staple ${catkin_LIBRARIES})
 
 add_executable(hover src/hover.cpp)
 target_link_libraries(hover ${catkin_LIBRARIES})
-
-add_executable(darknetSub src/examples/darknetSub.cpp)
-target_link_libraries(darknetSub ${catkin_LIBRARIES})
-
-add_executable(setHome src/setHome.cpp)
-target_link_libraries(setHome ${catkin_LIBRARIES})
-
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -223,11 +216,6 @@ target_link_libraries(setHome ${catkin_LIBRARIES})
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
 
-
-## Mark launchfiles for installation
-install(DIRECTORY launch/
-	DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
-)
 #############
 ## Testing ##
 #############

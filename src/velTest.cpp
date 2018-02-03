@@ -22,6 +22,10 @@ geometry_msgs::PoseStamped current_pose;
 
 const float POSITION_TOLERANCE = 1;
 
+const float p = 1.0f;
+const float i = 0.0f;
+const float d = 0.0f;
+
 void state_cb(const mavros_msgs::State::ConstPtr& msg)
 {
   // ROS_INFO("I'm in state_cb!");
@@ -113,7 +117,7 @@ bool go_to_position_raw(ros::NodeHandle* nh, float x, float y, float z, float ve
 }
 
 
-bool go_to_position(ros::NodeHandle* nh, float x, float y, float z, float velocity){
+bool go_to_position_pid(ros::NodeHandle* nh, float x, float y, float z){
   ros::Publisher set_vel_pub = nh->advertise<geometry_msgs::TwistStamped>("mavros/setpoint_velocity/cmd_vel", 10);
   geometry_msgs::TwistStamped vel;
 
@@ -121,7 +125,7 @@ bool go_to_position(ros::NodeHandle* nh, float x, float y, float z, float veloci
   if (set_vel_pub)
   {
 
-    printf("Going to position: %f, %f, %f at velocity %f\n", x, y, z, velocity);
+    printf("Going to position: %f, %f, %f\n", x, y, z);
 
     // set_vel_pub.publish(vel);
     // ros::Duration(.5).sleep();
@@ -136,21 +140,33 @@ bool go_to_position(ros::NodeHandle* nh, float x, float y, float z, float veloci
                     current_pose.pose.position.z, 
                     distance);
 
-      if(x > current_pose.pose.position.x){
-        vel.twist.linear.x = velocity;
-      }else{
-        vel.twist.linear.x = -velocity;
-      }
-      if(y > current_pose.pose.position.y){
-        vel.twist.linear.y = velocity;
-      }else{
-        vel.twist.linear.y = -velocity;
-      }
-      if(z > current_pose.pose.position.z){
-        vel.twist.linear.z = velocity;
-      }else{
-        vel.twist.linear.z = -velocity;
-      }
+      float errorX = x - current_pose.pose.position.x;
+      float errorY = y - current_pose.pose.position.y;
+      float errorZ = z - current_pose.pose.position.z;
+
+      float velX = errorX * p;
+      float velY = errorY * p;
+      float velZ = errorZ * p;
+
+      vel.twist.linear.x = velX;
+      vel.twist.linear.y = velY;
+      vel.twist.linear.z = velZ;
+
+      // if(x > current_pose.pose.position.x){
+      //   vel.twist.linear.x = velocity;
+      // }else{
+      //   vel.twist.linear.x = -velocity;
+      // }
+      // if(y > current_pose.pose.position.y){
+      //   vel.twist.linear.y = velocity;
+      // }else{
+      //   vel.twist.linear.y = -velocity;
+      // }
+      // if(z > current_pose.pose.position.z){
+      //   vel.twist.linear.z = velocity;
+      // }else{
+      //   vel.twist.linear.z = -velocity;
+      // }
 
       set_vel_pub.publish(vel);
       sleep(0.5);
@@ -238,7 +254,7 @@ int main(int argc, char** argv)
   sleep(10);
 
   ROS_INFO("Going to position 1");
-  go_to_position_raw(&nh, 5,5,2, 1, 1, 1);
+  go_to_position_pid(&nh, 5,5,2);
 
   sleep(5);
 
