@@ -35,7 +35,7 @@ void state_cb(const mavros_msgs::State::ConstPtr& msg)
 void pose_cb(const nav_msgs::Odometry::ConstPtr& msg) 
 {
 	current_pose = *msg;
-	ROS_INFO("x: %f y: %f x: %f", current_pose.pose.pose.position.x, current_pose.pose.pose.position.y, current_pose.pose.pose.position.z);
+	ROS_INFO("x: %f y: %f z: %f", current_pose.pose.pose.position.x, current_pose.pose.pose.position.y, current_pose.pose.pose.position.z);
 }
 //get compass heading 
 void heading_cb(const std_msgs::Float64::ConstPtr& msg)
@@ -102,7 +102,11 @@ int main(int argc, char** argv)
     ros::spinOnce();
     ros::Duration(0.01).sleep();
   }
-  
+  while(current_state.mode != "GUIDED")
+  {
+    ros::spinOnce();
+    ros::Duration(0.01).sleep();
+  }  
 
   //set the orientation of the gym
   GYM_OFFSET = current_heading.data;
@@ -117,16 +121,16 @@ int main(int argc, char** argv)
   }
 
   //set flight mode to guided
-  ros::ServiceClient set_mode_client = nh.serviceClient<mavros_msgs::SetMode>("/mavros/set_mode");
-  mavros_msgs::SetMode srv_setMode;
-  srv_setMode.request.base_mode = 0;
-  srv_setMode.request.custom_mode = "GUIDED";
-  if(set_mode_client.call(srv_setMode)){
-    ROS_INFO("setmode send ok");
-  }else{
-    ROS_ERROR("Failed SetMode");
-    return -1;
-  }
+  // ros::ServiceClient set_mode_client = nh.serviceClient<mavros_msgs::SetMode>("/mavros/set_mode");
+  // mavros_msgs::SetMode srv_setMode;
+  // srv_setMode.request.base_mode = 0;
+  // srv_setMode.request.custom_mode = "GUIDED";
+  // if(set_mode_client.call(srv_setMode)){
+  //   ROS_INFO("setmode send ok");
+  // }else{
+  //   ROS_ERROR("Failed SetMode");
+  //   return -1;
+  // }
 
   // arming
   ros::ServiceClient arming_client_i = nh.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
@@ -144,7 +148,7 @@ int main(int argc, char** argv)
   //request takeoff
   ros::ServiceClient takeoff_cl = nh.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/takeoff");
   mavros_msgs::CommandTOL srv_takeoff;
-  srv_takeoff.request.altitude = 3;
+  srv_takeoff.request.altitude = 1.5;
   if(takeoff_cl.call(srv_takeoff)){
     ROS_INFO("takeoff sent %d", srv_takeoff.response.success);
   }else{
@@ -155,20 +159,21 @@ int main(int argc, char** argv)
   sleep(10);
 
   
-  mavros_msgs::SetMode offb_set_mode;
-  offb_set_mode.request.custom_mode = "GUIDED";
-  float tollorance = .08;
-  if (set_mode_client.call(offb_set_mode) && offb_set_mode.response.mode_sent)
-    ROS_INFO("OFFBOARD enabled");
-  else
-  {
-    ROS_INFO("unable to switch to offboard");
-    return -1;
-  }
+  // mavros_msgs::SetMode offb_set_mode;
+  // offb_set_mode.request.custom_mode = "GUIDED";
+  // 
+  // if (set_mode_client.call(offb_set_mode) && offb_set_mode.response.mode_sent)
+  //   ROS_INFO("OFFBOARD enabled");
+  // else
+  // {
+  //   ROS_INFO("unable to switch to offboard");
+  //   return -1;
+  // }
 
   //move foreward
   setHeading(0);
-  setDestination(0, 8, 3);
+  setDestination(0, 2, 1.5);
+  float tollorance = .08;
   if (local_pos_pub)
   {
 
@@ -184,7 +189,7 @@ int main(int argc, char** argv)
       	break;
       }
       ros::spinOnce();
-      ros::Duration(0.2).sleep();
+      ros::Duration(0.5).sleep();
       if(i == 1)
       {
         ROS_INFO("Failed to reach destination. Stepping to next task.");
