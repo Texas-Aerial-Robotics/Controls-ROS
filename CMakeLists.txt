@@ -167,6 +167,9 @@ target_link_libraries(staple ${catkin_LIBRARIES})
 add_executable(hover src/hover.cpp)
 target_link_libraries(hover ${catkin_LIBRARIES})
 
+add_executable(RoombaFollow src/follow.cpp)
+target_link_libraries(RoombaFollow ${catkin_LIBRARIES})
+
 #add_executable(darknetSub src/examples/darknetSub.cpp)
 #target_link_libraries(darknetSub ${catkin_LIBRARIES})
 
