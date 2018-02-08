@@ -76,7 +76,24 @@ sim_vehicle.py -w
 
 Install Gazebo:  
 
-`curl -ssL http://get.gazebosim.org | sh`  
+Setup your computer to accept software from packages.osrfoundation.org.
+
+``` sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list' ```
+
+Setup keys
+
+```wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -```
+
+```sudo apt-get update```
+
+Install Gazebo 
+
+```sudo apt-get install gazebo7 libgazebo7-dev```
+
+Install ROS plugins
+
+```sudo apt install ros-kinetic-gazebo-ros ros-kinetic-gazebo-plugins```
+
 
 Get plugin for APM:
 
