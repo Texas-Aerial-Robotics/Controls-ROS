@@ -10,6 +10,18 @@ This package is loaded and run on our Nvidia Jetson TX1 onboard the quadcopter.
 
 It then feeds commands to the Pixhawk 2 using MAVROS. 
 
+# Set Up Catkin workspace 
+
+We use catkin build instead of catkin_make. Please install the following
+
+```sudo apt-get install python-wstool python-rosinstall-generator python-catkin-tools```
+
+~~~
+mkdir -p ~/catkin_ws/src
+cd ~/catkin_ws
+catkin init
+~~~
+
 # Clone instructions 
 
 Clone repository into a catkin workspace (typically a folder `src` called `catkin_ws`). To set up catkin follow this [tutorial](http://wiki.ros.org/catkin/Tutorials/create_a_workspace) 
@@ -17,6 +29,8 @@ Clone repository into a catkin workspace (typically a folder `src` called `catki
 2. Becomes `catkin_ws/src/Controls-ROS/`
 
 # Dependencies installation 
+
+``
 
 Install `mavros` from source using https://dev.px4.io/en/ros/mavros_installation.html#source-installation 
 * Make sure to change commands that say `indigo` to `kinetic`
