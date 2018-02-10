@@ -20,7 +20,6 @@ using namespace std;
 //Set global variables
 mavros_msgs::State current_state;
 nav_msgs::Odometry current_pose;
-geometry_msgs::PoseStamped pose;
 geometry_msgs::PoseStamped waypoint;
 std_msgs::Float64 current_heading;
 float GYM_OFFSET;
@@ -29,8 +28,6 @@ float GYM_OFFSET;
 void state_cb(const mavros_msgs::State::ConstPtr& msg)
 {
   current_state = *msg;
-  bool connected = current_state.connected;
-  bool armed = current_state.armed;
 }
 //get current position of drone
 void pose_cb(const nav_msgs::Odometry::ConstPtr& msg) 
@@ -64,10 +61,10 @@ void setHeading(float heading)
   float qy = cy * cr * sp + sy * sr * cp;
   float qz = sy * cr * cp - cy * sr * sp;
 
-  pose.pose.orientation.w = qw;
-  pose.pose.orientation.x = qx;
-  pose.pose.orientation.y = qy;
-  pose.pose.orientation.z = qz;
+  waypoint.pose.orientation.w = qw;
+  waypoint.pose.orientation.x = qx;
+  waypoint.pose.orientation.y = qy;
+  waypoint.pose.orientation.z = qz;
 
 }
 // set position to fly to in the gym frame
@@ -77,24 +74,35 @@ void setDestination(float x, float y, float z)
   float X = x*cos(-GYM_OFFSET*deg2rad) - y*sin(-GYM_OFFSET*deg2rad);
   float Y = x*sin(-GYM_OFFSET*deg2rad) + y*cos(-GYM_OFFSET*deg2rad);
   float Z = z;
-  pose.pose.position.x = X;
-  pose.pose.position.y = Y;
-  pose.pose.position.z = Z;
+  waypoint.pose.position.x = X;
+  waypoint.pose.position.y = Y;
+  waypoint.pose.position.z = Z;
   ROS_INFO("Destination set to x: %f y: %f z %f", X, Y, Z);
 }
 
+//initialize ROS
+void init_ros()
+{
+  ROS_INFO("INITIALIZING ROS");
+  for(int i=0; i<100; i++)
+  {
+    ros::spinOnce();
+    ros::Duration(0.01).sleep();
+  }
+}
+
 // update waypoint from strat but check inputs
-void waypoint_update(geometry_msgs::PoseStamped::ConstPtr& msg)
+void waypoint_update(const geometry_msgs::PoseStamped::ConstPtr& msg)
 {
   geometry_msgs::PoseStamped waypoint_eval;
-  waypoint_eval = *msg
-  int way_x = waypoint_eval.pose.postion.x;
-  int way_y = waypoint_eval.pose.postion.y;
-  int way_z = waypoint_eval.pose.postion.z;
+  waypoint_eval = *msg;
+  float way_x = waypoint_eval.pose.position.x;
+  float way_y = waypoint_eval.pose.position.y;
+  float way_z = waypoint_eval.pose.position.z;
 
   if (way_z < 3 && way_x < 3.6 && way_x > -.6 && way_y < 3.6 && way_y > -.6)
   {
-        waypoint = waypoint_eval;
+        setDestination(way_x,way_y,way_z);
   }
   else
   {
@@ -108,22 +116,16 @@ int main(int argc, char** argv)
   ros::NodeHandle controlnode;
 
   // the setpoint publishing rate MUST be faster than 2Hz
-  ros::Rate rate(20.0);
+  ros::Rate rate(100.0);
   ros::Subscriber state_sub = controlnode.subscribe<mavros_msgs::State>("mavros/state", 10, state_cb);
   ros::Publisher set_vel_pub = controlnode.advertise<mavros_msgs::PositionTarget>("mavros/setpoint_raw/local", 10);
   ros::Publisher local_pos_pub = controlnode.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10);
   ros::Subscriber currentPos = controlnode.subscribe<nav_msgs::Odometry>("mavros/global_position/local", 10, pose_cb);
-  ros::Subscriber currentHeading = controlnode.subscribe<std_msgs::Float64>("/mavros/global_position/compass_hdg", 10, heading_cb);
-  ros::Subscriber waypointSubscrib = controlnode.subscribe<geometry_msgs::PoseStamped>(" INSERT STRAT TOPIC HERE", 10, waypoint_update);
+  ros::Subscriber currentHeading = controlnode.subscribe<std_msgs::Float64>("mavros/global_position/compass_hdg", 10, heading_cb);
+  ros::Subscriber waypointSubscrib = controlnode.subscribe<geometry_msgs::PoseStamped>("waypoint", 10, waypoint_update);
 
-  // allow the subscribers to initialize
-  ROS_INFO("INITIALIZING...");
-  for(int i=0; i<100; i++)
-  {
-    ros::spinOnce();
-    ros::Duration(0.01).sleep();
-  }
-  
+  ros::ServiceClient arming_client = controlnode.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
+  ros::ServiceClient takeoff_client = controlnode.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/takeoff");
 
   //set the orientation of the gym
   GYM_OFFSET = current_heading.data;
@@ -136,100 +138,45 @@ int main(int argc, char** argv)
     ros::spinOnce();
     rate.sleep();
   }
+  ROS_INFO("Connected to FCU");
 
-  //set flight mode to guided
-  ros::ServiceClient set_mode_client = nh.serviceClient<mavros_msgs::SetMode>("/mavros/set_mode");
-  mavros_msgs::SetMode srv_setMode;
-  srv_setMode.request.base_mode = 0;
-  srv_setMode.request.custom_mode = "GUIDED";
-  if(set_mode_client.call(srv_setMode)){
-    ROS_INFO("setmode send ok");
-  }else{
-    ROS_ERROR("Failed SetMode");
-    return -1;
-  }
-
-  // arming
-  ros::ServiceClient arming_client_i = nh.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
-  mavros_msgs::CommandBool srv_arm_i;
-  srv_arm_i.request.value = true;
-  if (arming_client_i.call(srv_arm_i) && srv_arm_i.response.success)
-    ROS_INFO("ARM sent %d", srv_arm_i.response.success);
-  else
-  {
-    ROS_ERROR("Failed arming/disarming");
-    //return -1;
-  }
-
-
-  //request takeoff
-  ros::ServiceClient takeoff_cl = nh.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/takeoff");
-  mavros_msgs::CommandTOL srv_takeoff;
-  srv_takeoff.request.altitude = 3;
-  if(takeoff_cl.call(srv_takeoff)){
-    ROS_INFO("takeoff sent %d", srv_takeoff.response.success);
-  }else{
-    ROS_ERROR("Failed Takeoff");
-    return -1;
-  }
-
-  sleep(10);
-
-  
-  mavros_msgs::SetMode offb_set_mode;
-  offb_set_mode.request.custom_mode = "GUIDED";
-  float tollorance = .08;
-  if (set_mode_client.call(offb_set_mode) && offb_set_mode.response.mode_sent)
-    ROS_INFO("OFFBOARD enabled");
-  else
-  {
-    ROS_INFO("unable to switch to offboard");
-    return -1;
-  }
-
-  //move foreward
-  setHeading(0);
-  setDestination(0, 8, 3);
-  if (local_pos_pub)
-  {
-
-    for (int i = 10000; ros::ok() && i > 0; --i)
-    {
-
-      local_pos_pub.publish(pose);
-      float percentErrorX = abs((pose.pose.position.x - current_pose.pose.pose.position.x)/(pose.pose.position.x));
-      float percentErrorY = abs((pose.pose.position.y - current_pose.pose.pose.position.y)/(pose.pose.position.y));
-      float percentErrorZ = abs((pose.pose.position.z - current_pose.pose.pose.position.z)/(pose.pose.position.z));
-      if(percentErrorX < tollorance && percentErrorY < tollorance && percentErrorZ < tollorance)
-      {
-      	break;
-      }
-      ros::spinOnce();
-      ros::Duration(0.2).sleep();
-      if(i == 1)
-      {
-        ROS_INFO("Failed to reach destination. Stepping to next task.");
-      }
-    }
-    ROS_INFO("Done moving foreward.");
-  }
-
-  //land
-  ros::ServiceClient land_client = nh.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/land");
-  mavros_msgs::CommandTOL srv_land;
-  if (land_client.call(srv_land) && srv_land.response.success)
-    ROS_INFO("land sent %d", srv_land.response.success);
-  else
-  {
-    ROS_ERROR("Landing failed");
-    ros::shutdown();
-    return -1;
-  }
-
-  while (ros::ok())
+  // wait for mode to be set to guided
+  while (current_state.mode != "GUIDED")
   {
     ros::spinOnce();
     rate.sleep();
+  }
+  ROS_INFO("Mode set to GUIDED");
+
+  // arming
+  mavros_msgs::CommandBool arm_request;
+  arm_request.request.value = true;
+  while (!current_state.armed && !arm_request.response.success)
+  {
+    ros::Duration(.1).sleep();
+    arming_client.call(arm_request);
+  }
+  ROS_INFO("ARM sent %d", arm_request.response.success);
+
+
+  //request takeoff
+  mavros_msgs::CommandTOL takeoff_request;
+  takeoff_request.request.altitude = 2;
+  while (!takeoff_request.response.success)
+  {
+    ros::Duration(.1).sleep();
+    takeoff_client.call(takeoff_request);
+  }
+  ROS_INFO("Takeoff initialized");
+  sleep(10);
+
+  //move foreward
+  setHeading(0);
+  if (local_pos_pub)
+  {
+      local_pos_pub.publish(waypoint);
+      ros::spinOnce();
+      rate.sleep();
   }
   return 0;
 }
