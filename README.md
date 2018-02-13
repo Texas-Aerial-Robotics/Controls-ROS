@@ -10,7 +10,7 @@ It then feeds commands to the Pixhawk 2 using MAVROS.
 
 ## 1. Install ROS 
 
-   First, install ROS using the following instructions: http://wiki.ros.org/kinetic/Installation/Ubuntu 
+   First, install **ROS Kinetic** using the following instructions: http://wiki.ros.org/kinetic/Installation/Ubuntu 
 
    Do _Desktop Install_  
    Make sure to follow all the way through the installation (until _Step 1.7_ at the end of the page)
@@ -173,6 +173,20 @@ Set parameters for sim in the same window after you run the `sim_vehicle.py scri
 Do this by using command `param load <filename>`  
 Example params can be found in the `Controls-Other` repo: https://github.com/Texas-Aerial-Robotics/Controls-Other 
 
+--- 
+
+## Troubleshooting and Common Problems: 
+### During Catkin Build: 
+#### Complains about "GeographicLib" 
+```
+cd ~/catkin_ws/src/mavros/mavros/scripts 
+sudo ./install_geographiclib_datasets.sh 
+``` 
+
+#### Complains about "Geometry Msgs" 
+```
+sudo apt install ros-kinetic-geometry-msgs 
+``` 
 
 --- 
 
