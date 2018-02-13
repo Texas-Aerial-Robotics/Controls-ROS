@@ -1,4 +1,4 @@
-## Texas Aerial Robotics ROS package 
+# Texas Aerial Robotics ROS package 
 
 In this repository are the files nessary to build our ROS (Robot Operating System) package. 
 
@@ -8,12 +8,14 @@ This package is loaded and run on our Nvidia Jetson TX1 onboard the quadcopter.
 
 It then feeds commands to the Pixhawk 2 using MAVROS. 
 
-#1. Install ROS 
-⋅⋅⋅First, install ROS using the following instructions: http://wiki.ros.org/kinetic/Installation/Ubuntu 
-⋅⋅⋅Do _Desktop Install_
-⋅⋅⋅Make sure to follow all the way through the installation (until _Step 1.7_ at the end of the page)
+## 1. Install ROS 
 
-#2. Set Up Catkin workspace 
+   First, install ROS using the following instructions: http://wiki.ros.org/kinetic/Installation/Ubuntu 
+
+   Do _Desktop Install_  
+   Make sure to follow all the way through the installation (until _Step 1.7_ at the end of the page)
+
+## 2. Set Up Catkin workspace 
 
 We use catkin build instead of catkin_make. Please install the following: 
 ```
@@ -27,7 +29,7 @@ cd ~/catkin_ws
 catkin init
 ```
 
-#3. Dependencies installation 
+## 3. Dependencies installation 
 
 Install `mavros` and `mavlink` from source: 
 ```
@@ -43,7 +45,7 @@ rosdep install --from-paths src --ignore-src --rosdistro `echo $ROS_DISTRO` -y
 catkin build
 ```
 
-#4. Clone our ROS package repository 
+## 4. Clone our ROS package repository 
 
 ```
 cd ~/catkin_ws/src 
@@ -51,15 +53,15 @@ git clone https://github.com/Texas-Aerial-Robotics/Controls-ROS.git
 ```
 Our repository should now be copied to `~/catkin_ws/src/Controls-ROS/`
 
-#5. Build instructions 
-⋅⋅⋅Inside `catkin_ws`, run `catkin build`
+## 5. Build instructions 
+   Inside `catkin_ws`, run `catkin build`
 
 ```
 cd ~/catkin_ws 
 catkin build 
 ```
 
-#6. Install Ardupilot 
+## 6. Install Ardupilot 
 
 In home directory: 
 ```
@@ -98,7 +100,7 @@ cd ~/ardupilot/ArduCopter
 sim_vehicle.py -w
 ```
 
-#7. Install Gazebo
+## 7. Install Gazebo
 
 Setup your computer to accept software from http://packages.osrfoundation.org:
 ```
@@ -153,7 +155,7 @@ echo 'export GAZEBO_MODEL_PATH=~/gazebo_ws/gazebo_models' >> ~/.bashrc
 source ~/.bashrc
 ```
 
-#8. Run Simulator 
+## 8. Run Simulator 
 
 In one terminal, run SITL:
 ```
