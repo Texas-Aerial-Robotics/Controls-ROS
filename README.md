@@ -10,6 +10,18 @@ This package is loaded and run on our Nvidia Jetson TX1 onboard the quadcopter.
 
 It then feeds commands to the Pixhawk 2 using MAVROS. 
 
+# Set Up Catkin workspace 
+
+We use catkin build instead of catkin_make. Please install the following
+
+```sudo apt-get install python-wstool python-rosinstall-generator python-catkin-tools```
+
+~~~
+mkdir -p ~/catkin_ws/src
+cd ~/catkin_ws
+catkin init
+~~~
+
 # Clone instructions 
 
 Clone repository into a catkin workspace (typically a folder `src` called `catkin_ws`) to set up catkin follow this [tutorial](http://wiki.ros.org/catkin/Tutorials/create_a_workspace) 
@@ -17,6 +29,8 @@ Clone repository into a catkin workspace (typically a folder `src` called `catki
 2. Becomes `catkin_ws/src/Controls-ROS/`
 
 # Dependencies installation 
+
+``
 
 Install `mavros` from source using https://dev.px4.io/en/ros/mavros_installation.html#source-installation 
 * Make sure to change commands that say `indigo` to `kinetic`
@@ -35,4 +49,100 @@ follow this [tutorial](https://github.com/AS4SR/general_info/wiki/ArduPilot:-Ins
 
 
 
+~~~
+git clone git://github.com/ArduPilot/ardupilot.git
+cd ardupilot  
+git submodule update --init --recursive
+~~~
 
+Install some packages
+
+~~~
+sudo apt-get install python-matplotlib python-serial python-wxgtk3.0 python-wxtools python-lxml  
+sudo apt-get install python-scipy python-opencv ccache gawk git python-pip python-pexpect  
+sudo pip2 install future pymavlink MAVProxy 
+~~~
+
+Open ~/.bashrc:  
+
+`gedit ~/.bashrc`  
+
+Add these lines to .bashrc:  
+~~~
+export PATH=$PATH:$HOME/ardupilot/Tools/autotest  
+export PATH=/usr/lib/ccache:$PATH
+~~~ 
+
+Reload ~/.bashrc:  
+`. ~/.bashrc`  
+
+Run SITL once to set params:
+~~~
+cd ~/ardupilot/ArduCopter
+sim_vehicle.py -w
+~~~
+
+## Install Gazebo
+
+Install Gazebo:  
+
+Setup your computer to accept software from packages.osrfoundation.org.
+
+``` sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list' ```
+
+Setup keys
+
+```wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -```
+
+```sudo apt-get update```
+
+Install Gazebo 
+
+```sudo apt-get install gazebo7 libgazebo7-dev```
+
+Install ROS plugins
+
+```sudo apt install ros-kinetic-gazebo-ros ros-kinetic-gazebo-plugins```
+
+
+Get plugin for APM:
+
+~~~
+git clone https://github.com/SwiftGust/ardupilot_gazebo
+cd ardupilot_gazebo
+mkdir build
+cd build
+cmake ..
+make -j4
+sudo make install
+~~~
+
+Set paths for Models
+~~~
+echo 'export GAZEBO_MODEL_PATH=~/ardupilot_gazebo/gazebo_models' >> ~/.bashrc
+. .bashrc
+~~~
+
+Add Gazebo Models
+
+~~~
+
+hg clone https://bitbucket.org/osrf/gazebo_models ~/gazebo_ws/gazebo_models
+cd ~/gazebo_ws/gazebo_models
+hg checkout zephyr_demos
+echo 'export GAZEBO_MODEL_PATH=~/gazebo_ws/gazebo_models' >> ~/.bashrc
+source ~/.bashrc
+~~~
+
+# To Run Sim
+
+Run SITL:
+`sim_vehicle.py -j4 -f Gazebo`  
+
+Run Gazebo:
+`gazebo --verbose ~/ardupilot_gazebo/gazebo_models/iris_irlock_demo.world`  
+
+ROS connection string is `udp://127.0.0.1:14551@14555`
+
+Set parameters for sim in the same window after you run the sim_vehicle.py script. Do this my using command `param load <filename>`  
+Example params can be found in the Controls-Other repo.

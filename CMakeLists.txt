@@ -66,10 +66,11 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+generate_messages(
+   DEPENDENCIES
+   std_msgs  # Or other packages containing msgs
+ 
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -103,7 +104,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES flight_pkg
-#  CATKIN_DEPENDS mavros
+   CATKIN_DEPENDS mavros
 #  DEPENDS system_lib
 )
 
@@ -166,6 +167,16 @@ target_link_libraries(staple ${catkin_LIBRARIES})
 
 add_executable(hover src/hover.cpp)
 target_link_libraries(hover ${catkin_LIBRARIES})
+
+add_executable(RoombaFollow src/follow.cpp)
+target_link_libraries(RoombaFollow ${catkin_LIBRARIES})
+
+#add_executable(darknetSub src/examples/darknetSub.cpp)
+#target_link_libraries(darknetSub ${catkin_LIBRARIES})
+
+add_executable(setHome src/setHome.cpp)
+target_link_libraries(setHome ${catkin_LIBRARIES})
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
