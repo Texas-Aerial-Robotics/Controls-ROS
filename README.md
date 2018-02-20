@@ -166,12 +166,96 @@ In another terminal, run Gazebo:
 ```
 gazebo --verbose ~/ardupilot_gazebo/gazebo_worlds/iris_irlock_demo.world
 ```  
-
 ROS connection string is `udp://127.0.0.1:14551@14555`
 
 Set parameters for sim in the same window after you run the `sim_vehicle.py script`. 
 Do this by using command `param load <filename>`  
 Example params can be found in the `Controls-Other` repo: https://github.com/Texas-Aerial-Robotics/Controls-Other 
+
+
+## 9. Install Roomba Drone Simulator 
+
+In order to use the ardupilot simulator with the roombas as well as other plugins such as cameras you need to run gazebo with ros. Install the following dependencies to get the simulator to run
+
+```
+ sudo apt install ros-kinetic-gazebo-ros ros-kinetic-gazebo-plugins
+```
+clone in Gazebo-Ros in your catkin_ws and the Computations repo in your home directory 
+
+```
+cd ~/catkin_ws/src
+git clone https://github.com/Texas-Aerial-Robotics/Gazebo-Ros.git
+cd ~
+git clone https://github.com/Texas-Aerial-Robotics/Computations.git
+```
+
+Add the following to your bashrc to use the roomba plugins
+
+```
+export GAZEBO_MODEL_PATH=${GAZEBO_MODEL_PATH}:~/Computations/roomba_host/models
+```
+
+```
+export GAZEBO_PLUGIN_PATH=${GAZEBO_PLUGIN_PATH}:~/Computations/roomba_host/build
+```
+### Run a sim with roslaunch 
+```
+roslaunch gazebo_ros_sim gazebo.launch
+```
+in another terminal run the following command to start and connect the ardupilot sim to gazebo
+
+```
+cd ~/ardupilot/ArduCopter/ && sim_vehicle.py -f gazebo-iris --console -I0
+```
+
+### To view camera plugin 
+install image view 
+
+```
+sudo apt install ros-kinetic-image-view
+```
+
+To view camera footage 
+```
+rosrun image_view image_view image:=/webcam/image_raw
+```
+
+
+## 10. Run Mavros Scripts from Controls-Ros package 
+
+Clone the Controls-Other repo to access our params and apm launch file
+```
+git clone https://github.com/Texas-Aerial-Robotics/Controls-Other
+```
+Make a launch directory in your Ardupilot directory and copy the apm.launch file there
+
+```
+cd ardupilot/
+mkdir launch
+cp ~/Controls-Other/Launch/apm.launch ~/ardupilot/launch
+```
+launch the sim via roslaunch 
+
+```
+roslaunch gazebo_ros_sim gazebo.launch
+```
+in another terminal run the following command to start and connect the ardupilot sim to gazebo
+
+```
+cd ~/ardupilot/ArduCopter/ && sim_vehicle.py -f gazebo-iris --console -I0
+```
+in another terminal run
+```
+cd ~/ardupilot/launch
+roslaunch apm.launch
+```
+Be sure to wait for the drone to go throught the full initialization process. The drone will be ready to fly once the console reads Optical Flow now aiding and origin set to GPS. For the competition we will use mission planner to home the drone, but for introdution sake let the drone use GPS
+
+in another terminal run
+```
+rosrun flight_pkg staple
+```
+
 
 --- 
 
