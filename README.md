@@ -1,113 +1,136 @@
 # Texas Aerial Robotics ROS package 
 
-In this repository are the files nessary to build the ROS (Robot Operating System) package. 
+In this repository are the files nessary to build our ROS (Robot Operating System) package. 
 
-We use Ubuntu 16.04 and ROS Kinetic 
-
-ROS can be installed following these instructions: http://wiki.ros.org/kinetic/Installation/Ubuntu 
+We use **Ubuntu 16.04** and **ROS Kinetic** 
 
 This package is loaded and run on our Nvidia Jetson TX1 onboard the quadcopter. 
 
 It then feeds commands to the Pixhawk 2 using MAVROS. 
 
-# Set Up Catkin workspace 
+## 1. Install ROS 
 
-We use catkin build instead of catkin_make. Please install the following
+   First, install **ROS Kinetic** using the following instructions: http://wiki.ros.org/kinetic/Installation/Ubuntu 
 
-```sudo apt-get install python-wstool python-rosinstall-generator python-catkin-tools```
+   Do _Desktop Install_  
+   Make sure to follow all the way through the installation (until _Step 1.7_ at the end of the page)
 
-~~~
+## 2. Set Up Catkin workspace 
+
+We use catkin build instead of catkin_make. Please install the following: 
+```
+sudo apt-get install python-wstool python-rosinstall-generator python-catkin-tools
+```
+
+Then, initialize the catkin workspace: 
+```
 mkdir -p ~/catkin_ws/src
 cd ~/catkin_ws
 catkin init
-~~~
+```
 
-# Clone instructions 
+## 3. Dependencies installation 
 
-Clone repository into a catkin workspace (typically a folder `src` called `catkin_ws`) to set up catkin follow this [tutorial](http://wiki.ros.org/catkin/Tutorials/create_a_workspace) 
-1. In `catkin_ws/src`, run `git clone https://github.com/Texas-Aerial-Robotics/Controls-ROS.git`
-2. Becomes `catkin_ws/src/Controls-ROS/`
+Install `mavros` and `mavlink` from source: 
+```
+cd ~/catkin_ws
+wstool init ~/catkin_ws/src
 
-# Dependencies installation 
+rosinstall_generator --upstream mavros | tee /tmp/mavros.rosinstall
+rosinstall_generator mavlink | tee -a /tmp/mavros.rosinstall
+wstool merge -t src /tmp/mavros.rosinstall
+wstool update -t src
+rosdep install --from-paths src --ignore-src --rosdistro `echo $ROS_DISTRO` -y
 
-``
+catkin build
+```
 
-Install `mavros` from source using https://dev.px4.io/en/ros/mavros_installation.html#source-installation 
-* Make sure to change commands that say `indigo` to `kinetic`
+## 4. Clone our ROS package repository 
 
-# Build instructions 
+```
+cd ~/catkin_ws/src 
+git clone https://github.com/Texas-Aerial-Robotics/Controls-ROS.git
+```
+Our repository should now be copied to `~/catkin_ws/src/Controls-ROS/`
 
-Inside `catkin_ws`, run `catkin build`
+## 5. Build instructions 
+   Inside `catkin_ws`, run `catkin build`
 
-# Gazebo installation with ardupilot 
+```
+cd ~/catkin_ws 
+catkin build 
+```
 
-first clone ardupilot:
+## 6. Install Ardupilot
 
-follow this [git hub post](https://github.com/ArduPilot/ardupilot_wiki/issues/1001) to install gazebo with ardupilot support
-
-follow this [tutorial](https://github.com/AS4SR/general_info/wiki/ArduPilot:-Instructions-to-set-up-and-run-an-autopilot-using-SITL-and-Gazebo-simulator) to clone ardupilot and get the drone running
-
-
-
-~~~
+In home directory: 
+```
+cd ~
 git clone git://github.com/ArduPilot/ardupilot.git
 cd ardupilot  
 git submodule update --init --recursive
-~~~
+```
 
-Install some packages
-
-~~~
-sudo apt-get install python-matplotlib python-serial python-wxgtk3.0 python-wxtools python-lxml  
-sudo apt-get install python-scipy python-opencv ccache gawk git python-pip python-pexpect  
+Install some packages: 
+```
+sudo apt install python-matplotlib python-serial python-wxgtk3.0 python-wxtools python-lxml  
+sudo apt install python-scipy python-opencv ccache gawk git python-pip python-pexpect  
 sudo pip2 install future pymavlink MAVProxy 
-~~~
+```
 
-Open ~/.bashrc:  
+Open `~/.bashrc`:  
+```
+gedit ~/.bashrc
+```
 
-`gedit ~/.bashrc`  
-
-Add these lines to .bashrc:  
-~~~
+Add these lines to end of `~/.bashrc`:  
+```
 export PATH=$PATH:$HOME/ardupilot/Tools/autotest  
 export PATH=/usr/lib/ccache:$PATH
-~~~ 
+``` 
 
-Reload ~/.bashrc:  
-`. ~/.bashrc`  
+Reload `~/.bashrc`:  
+```
+. ~/.bashrc
+```  
 
-Run SITL once to set params:
-~~~
+Run SITL (Software In The Loop) once to set params:
+```
 cd ~/ardupilot/ArduCopter
 sim_vehicle.py -w
-~~~
+```
 
-## Install Gazebo
+## 7. Install Gazebo
 
-Install Gazebo:  
+Setup your computer to accept software from http://packages.osrfoundation.org:
+```
+sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list'
+```
 
-Setup your computer to accept software from packages.osrfoundation.org.
+Setup keys:
+```
+wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add - 
+```
 
-``` sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list' ```
+Reload software list: 
+```
+sudo apt-get update
+```
 
-Setup keys
+Install Gazebo: 
+```
+sudo apt-get install gazebo7 libgazebo7-dev
+```
 
-```wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -```
-
-```sudo apt-get update```
-
-Install Gazebo 
-
-```sudo apt-get install gazebo7 libgazebo7-dev```
-
-Install ROS plugins
-
-```sudo apt install ros-kinetic-gazebo-ros ros-kinetic-gazebo-plugins```
+Install ROS plugins: 
+```
+sudo apt install ros-kinetic-gazebo-ros ros-kinetic-gazebo-plugins
+```
 
 
-Get plugin for APM:
-
-~~~
+Get Gazebo plugin for APM (ArduPilot Master):
+```
+cd ~
 git clone https://github.com/SwiftGust/ardupilot_gazebo
 cd ardupilot_gazebo
 mkdir build
@@ -115,34 +138,60 @@ cd build
 cmake ..
 make -j4
 sudo make install
-~~~
+```
 
-Set paths for Models
-~~~
+Set paths for models: 
+```
 echo 'export GAZEBO_MODEL_PATH=~/ardupilot_gazebo/gazebo_models' >> ~/.bashrc
-. .bashrc
-~~~
+. ~/.bashrc
+```
 
-Add Gazebo Models
-
-~~~
-
+Add Gazebo Models: 
+```
 hg clone https://bitbucket.org/osrf/gazebo_models ~/gazebo_ws/gazebo_models
 cd ~/gazebo_ws/gazebo_models
 hg checkout zephyr_demos
 echo 'export GAZEBO_MODEL_PATH=~/gazebo_ws/gazebo_models' >> ~/.bashrc
 source ~/.bashrc
-~~~
+```
 
-# To Run Sim
+## 8. Run Simulator 
 
-Run SITL:
-`sim_vehicle.py -j4 -f Gazebo`  
+In one terminal, run SITL:
+```
+sim_vehicle.py -j4 -f Gazebo --console 
+```  
 
-Run Gazebo:
-`gazebo --verbose ~/ardupilot_gazebo/gazebo_models/iris_irlock_demo.world`  
+In another terminal, run Gazebo:
+```
+gazebo --verbose ~/ardupilot_gazebo/gazebo_worlds/iris_irlock_demo.world
+```  
 
 ROS connection string is `udp://127.0.0.1:14551@14555`
 
-Set parameters for sim in the same window after you run the sim_vehicle.py script. Do this my using command `param load <filename>`  
-Example params can be found in the Controls-Other repo.
+Set parameters for sim in the same window after you run the `sim_vehicle.py script`. 
+Do this by using command `param load <filename>`  
+Example params can be found in the `Controls-Other` repo: https://github.com/Texas-Aerial-Robotics/Controls-Other 
+
+--- 
+
+## Troubleshooting and Common Problems: 
+### During Catkin Build: 
+#### Complains about "GeographicLib" 
+```
+cd ~/catkin_ws/src/mavros/mavros/scripts 
+sudo ./install_geographiclib_datasets.sh 
+``` 
+
+#### Complains about "Geometry Msgs" 
+```
+sudo apt install ros-kinetic-geometry-msgs 
+``` 
+
+--- 
+
+References: 
+- https://dev.px4.io/en/ros/mavros_installation.html#source-installation 
+- http://wiki.ros.org/catkin/Tutorials/create_a_workspace  
+- https://github.com/ArduPilot/ardupilot_wiki/issues/1001 
+- https://github.com/AS4SR/general_info/wiki/ArduPilot:-Instructions-to-set-up-and-run-an-autopilot-using-SITL-and-Gazebo-simulator
