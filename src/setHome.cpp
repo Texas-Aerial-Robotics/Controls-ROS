@@ -55,24 +55,28 @@ int main(int argc, char **argv)
   double latitude = 30.2672;
   double longitude = -97.7431;
   double altitude = 165.0;
+  // double latitude = 0.0;
+  // double longitude = 0.0;
+  // double altitude = 0.0;
 
-  mavlink::common::msg::SET_GPS_GLOBAL_ORIGIN origin_msg;
-  origin_msg.latitude = (uint32_t)(latitude * 10000000);
-  origin_msg.longitude = (uint32_t)(longitude * 10000000);
-  origin_msg.altitude = (uint32_t)(altitude * 1000);
-  origin_msg.target_system = target_system;
 
-  mavros_msgs::Mavlink mavrosMsg;
-  bool success = packMavlinkMessage(origin_msg, mavrosMsg);
+  mavlink::common::msg::SET_GPS_GLOBAL_ORIGIN originMsg;
+  originMsg.latitude = (uint32_t)(latitude * 10000000);
+  originMsg.longitude = (uint32_t)(longitude * 10000000);
+  originMsg.altitude = (uint32_t)(altitude * 1000);
+  originMsg.target_system = target_system;
 
-  // if(success){
-  //   printf("Succeeded in packing mavlink message\n");
-  // }
-  // else{
-  //   printf("FAILED to pack mavlink message\n");
-  // }
+  mavros_msgs::Mavlink packedMsg;
+  bool success = packMavlinkMessage(originMsg, packedMsg);
 
-  origin_pub.publish(mavrosMsg);
+  if(success){
+    printf("Pack mavlink message SUCCEEDED\n");
+  }
+  else{
+    printf("Pack mavlink message FAILED\n");
+  }
+
+  origin_pub.publish(packedMsg);
 
 
   mavros_msgs::CommandHome set_home_req;
