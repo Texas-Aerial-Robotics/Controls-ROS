@@ -49,15 +49,15 @@ int main(int argc, char **argv)
     rate.sleep();
   }
 
-  ros::Duration(1.0).sleep();
+  ros::Duration(10.0).sleep();
 
 
-  double latitude = 30.2672;
-  double longitude = -97.7431;
-  double altitude = 165.0;
-  // double latitude = 0.0;
-  // double longitude = 0.0;
-  // double altitude = 0.0;
+  // double latitude = 30.2672;
+  // double longitude = -97.7431;
+  // double altitude = 165.0;
+  double latitude = 0.0;
+  double longitude = 0.0;
+  double altitude = 0.0;
 
 
   mavlink::common::msg::SET_GPS_GLOBAL_ORIGIN originMsg;
@@ -79,6 +79,7 @@ int main(int argc, char **argv)
   origin_pub.publish(packedMsg);
 
 
+  ros::Duration(10.0).sleep();
   mavros_msgs::CommandHome set_home_req;
   set_home_req.request.current_gps = false;
   set_home_req.request.latitude = latitude;
