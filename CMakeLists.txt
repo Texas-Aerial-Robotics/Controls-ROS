@@ -8,7 +8,6 @@ project(flight_pkg)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-
   mavros
 )
 
@@ -106,9 +105,10 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES flight_pkg
    CATKIN_DEPENDS mavros
- 
 #  DEPENDS system_lib
 )
+
+set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
 
 ###########
 ## Build ##
@@ -161,6 +161,9 @@ target_link_libraries(nedTest ${catkin_LIBRARIES})
 add_executable(velTest src/velTest.cpp)
 target_link_libraries(velTest ${catkin_LIBRARIES})
 
+add_executable(pidWaypoint src/pidWaypoint.cpp)
+target_link_libraries(pidWaypoint ${catkin_LIBRARIES})
+
 add_executable(staple src/staple.cpp)
 target_link_libraries(staple ${catkin_LIBRARIES})
 
@@ -175,6 +178,9 @@ target_link_libraries(RoombaFollow ${catkin_LIBRARIES})
 
 add_executable(setHome src/setHome.cpp)
 target_link_libraries(setHome ${catkin_LIBRARIES})
+
+add_executable(setOrigin src/setOrigin.cpp)
+target_link_libraries(setOrigin ${catkin_LIBRARIES})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -226,11 +232,6 @@ target_link_libraries(setHome ${catkin_LIBRARIES})
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
 
-
-## Mark launchfiles for installation
-install(DIRECTORY launch/
-	DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
-)
 #############
 ## Testing ##
 #############

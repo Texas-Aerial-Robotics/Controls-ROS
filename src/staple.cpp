@@ -35,15 +35,16 @@ void state_cb(const mavros_msgs::State::ConstPtr& msg)
 //get current position of drone
 void pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg) 
 {
+
   current_pose = *msg;
-  // ROS_INFO("x: %f", current_pose.pose.position.x);
+  ROS_INFO("x: %f y: %f z: %f", current_pose.pose.position.x, current_pose.pose.position.y, current_pose.pose.position.z);
   // ROS_INFO("y: %f", current_pose.pose.position.y);
   // ROS_INFO("z: %f", current_pose.pose.position.z);
 }
 // void pose_cb(const nav_msgs::Odometry::ConstPtr& msg) 
 // {
-// 	current_pose = *msg;
-// 	ROS_INFO("x: %f y: %f z: %f", current_pose.pose.pose.position.x, current_pose.pose.pose.position.y, current_pose.pose.pose.position.z);
+//  current_pose = *msg;
+//  ROS_INFO("x: %f y: %f z: %f", current_pose.pose.pose.position.x, current_pose.pose.pose.position.y, current_pose.pose.pose.position.z);
 // }
 //get compass heading 
 void heading_cb(const std_msgs::Float64::ConstPtr& msg)
@@ -158,7 +159,7 @@ int main(int argc, char** argv)
   //move foreward
   setHeading(0);
   setDestination(0, 2, 1.5);
-  float tollorance = .08;
+  float tollorance = .35;
   if (local_pos_pub)
   {
 
@@ -166,10 +167,21 @@ int main(int argc, char** argv)
     {
 
       local_pos_pub.publish(pose);
-       float percentErrorX = (pose.pose.position.x - current_pose.pose.position.x)/(pose.pose.position.x);
-      float percentErrorY = (pose.pose.position.y - current_pose.pose.position.y)/(pose.pose.position.y);
-      float percentErrorZ = (pose.pose.position.z - current_pose.pose.position.z)/(pose.pose.position.z);
-      if(percentErrorX < tollorance && percentErrorY < tollorance && percentErrorZ < tollorance)
+      // float percentErrorX = abs((pose.pose.position.x - current_pose.pose.position.x)/(pose.pose.position.x));
+      // float percentErrorY = abs((pose.pose.position.y - current_pose.pose.position.y)/(pose.pose.position.y));
+      // float percentErrorZ = abs((pose.pose.position.z - current_pose.pose.position.z)/(pose.pose.position.z));
+      // cout << " px " << percentErrorX << " py " << percentErrorY << " pz " << percentErrorZ << endl;
+      // if(percentErrorX < tollorance && percentErrorY < tollorance && percentErrorZ < tollorance)
+      // {
+      //   break;
+      // }
+      float deltaX = abs(pose.pose.position.x - current_pose.pose.position.x);
+      float deltaY = abs(pose.pose.position.y - current_pose.pose.position.y);
+      float deltaZ = abs(pose.pose.position.z - current_pose.pose.position.z);
+      //cout << " dx " << deltaX << " dy " << deltaY << " dz " << deltaZ << endl;
+      float dMag = sqrt( pow(deltaX, 2) + pow(deltaY, 2) + pow(deltaZ, 2) );
+      cout << dMag << endl;
+      if( dMag < tollorance)
       {
         break;
       }
