@@ -122,7 +122,7 @@ int main(int argc, char** argv)
   ros::Publisher local_pos_pub = controlnode.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10);
   ros::Subscriber currentPos = controlnode.subscribe<nav_msgs::Odometry>("mavros/global_position/local", 10, pose_cb);
   ros::Subscriber currentHeading = controlnode.subscribe<std_msgs::Float64>("mavros/global_position/compass_hdg", 10, heading_cb);
-  ros::Subscriber waypointSubscrib = controlnode.subscribe<geometry_msgs::PoseStamped>("waypoint", 10, waypoint_update);
+  ros::Subscriber waypointSubscrib = controlnode.subscribe<geometry_msgs::PoseStamped>("roombaPose", 10, waypoint_update);
 
   ros::ServiceClient arming_client = controlnode.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
   ros::ServiceClient takeoff_client = controlnode.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/takeoff");
@@ -161,7 +161,8 @@ int main(int argc, char** argv)
 
   //request takeoff
   mavros_msgs::CommandTOL takeoff_request;
-  takeoff_request.request.altitude = 2;
+  takeoff_request.request.altitude = 3;
+
   while (!takeoff_request.response.success)
   {
     ros::Duration(.1).sleep();
@@ -169,10 +170,10 @@ int main(int argc, char** argv)
   }
   ROS_INFO("Takeoff initialized");
   sleep(10);
-
+  setDestination(0,0,3);
   //move foreward
   setHeading(0);
-  if (local_pos_pub)
+  while(local_pos_pub)
   {
       local_pos_pub.publish(waypoint);
       ros::spinOnce();
