@@ -100,8 +100,11 @@ void waypoint_update(const geometry_msgs::PoseStamped::ConstPtr& msg)
   float way_y = waypoint_eval.pose.position.y;
   float way_z = waypoint_eval.pose.position.z;
 
-  if (way_z < 3 && way_x < 3.6 && way_x > -.6 && way_y < 3.6 && way_y > -.6)
+  if (way_z < 3 && way_z > 0 && way_x < 3.6 && way_x > -3.6 && way_y < 3.6 && way_y > -3.6)
   {
+        waypoint.pose.position.x = way_x;
+        waypoint.pose.position.y = way_y;
+        waypoint.pose.position.z = way_z;
         setDestination(way_x,way_y,way_z);
   }
   else
@@ -120,6 +123,7 @@ int main(int argc, char** argv)
   ros::Subscriber state_sub = controlnode.subscribe<mavros_msgs::State>("mavros/state", 10, state_cb);
   ros::Publisher set_vel_pub = controlnode.advertise<mavros_msgs::PositionTarget>("mavros/setpoint_raw/local", 10);
   ros::Publisher local_pos_pub = controlnode.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10);
+  ros::Publisher gym_offset_pub = controlnode.advertise<std_msgs::Float64>("gymOffset", 1);
   ros::Subscriber currentPos = controlnode.subscribe<nav_msgs::Odometry>("mavros/global_position/local", 10, pose_cb);
   ros::Subscriber currentHeading = controlnode.subscribe<std_msgs::Float64>("mavros/global_position/compass_hdg", 10, heading_cb);
   ros::Subscriber waypointSubscrib = controlnode.subscribe<geometry_msgs::PoseStamped>("roombaPose", 10, waypoint_update);
@@ -127,10 +131,7 @@ int main(int argc, char** argv)
   ros::ServiceClient arming_client = controlnode.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
   ros::ServiceClient takeoff_client = controlnode.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/takeoff");
 
-  //set the orientation of the gym
-  GYM_OFFSET = current_heading.data;
-  ROS_INFO("the N' axis is facing: %f", GYM_OFFSET);
-  cout << current_heading << "\n" << endl;
+  
 
   // wait for FCU connection
   while (ros::ok() && !current_state.connected)
@@ -139,8 +140,7 @@ int main(int argc, char** argv)
     rate.sleep();
   }
   ROS_INFO("Connected to FCU");
-
-  // wait for mode to be set to guided
+    // wait for mode to be set to guided
   while (current_state.mode != "GUIDED")
   {
     ros::spinOnce();
@@ -148,6 +148,13 @@ int main(int argc, char** argv)
   }
   ROS_INFO("Mode set to GUIDED");
 
+  //set the orientation of the gym
+  GYM_OFFSET = current_heading.data;
+  ROS_INFO("the N' axis is facing: %f", GYM_OFFSET);
+  cout << current_heading << "\n" << endl;
+  std_msgs::Float64 gymOffset;
+  gymOffset.data = GYM_OFFSET;
+  gym_offset_pub.publish(gymOffset);
   // arming
   mavros_msgs::CommandBool arm_request;
   arm_request.request.value = true;
@@ -170,11 +177,12 @@ int main(int argc, char** argv)
   }
   ROS_INFO("Takeoff initialized");
   sleep(10);
-  setDestination(0,0,3);
+  setDestination(0,0,2.9);
   //move foreward
   setHeading(0);
   while(local_pos_pub)
   {
+      //gym_offset_pub.publish(GYM_OFFSET);
       local_pos_pub.publish(waypoint);
       ros::spinOnce();
       rate.sleep();
