@@ -119,7 +119,7 @@ int main(int argc, char** argv)
   ros::NodeHandle controlnode;
 
   // the setpoint publishing rate MUST be faster than 2Hz
-  ros::Rate rate(100.0);
+  ros::Rate rate(400.0);
   ros::Subscriber state_sub = controlnode.subscribe<mavros_msgs::State>("mavros/state", 10, state_cb);
   ros::Publisher set_vel_pub = controlnode.advertise<mavros_msgs::PositionTarget>("mavros/setpoint_raw/local", 10);
   ros::Publisher local_pos_pub = controlnode.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10);
