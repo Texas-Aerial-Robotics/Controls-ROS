@@ -23,6 +23,12 @@ nav_msgs::Odometry current_pose;
 geometry_msgs::PoseStamped waypoint;
 std_msgs::Float64 current_heading;
 float GYM_OFFSET;
+float x_min;
+float x_max;
+float y_min;
+float y_max;
+float z_min;
+float z_max;
 
 //get armed state
 void state_cb(const mavros_msgs::State::ConstPtr& msg)
@@ -100,7 +106,7 @@ void waypoint_update(const geometry_msgs::PoseStamped::ConstPtr& msg)
   float way_y = waypoint_eval.pose.position.y;
   float way_z = waypoint_eval.pose.position.z;
 
-  if (way_z < 3 && way_z > 0 && way_x < 3.6 && way_x > -3.6 && way_y < 3.6 && way_y > -3.6)
+  if (way_z < z_max && way_z > z_min && way_x < x_max && way_x > x_min && way_y < y_max && way_y > y_min)
   {
         waypoint.pose.position.x = way_x;
         waypoint.pose.position.y = way_y;
@@ -118,8 +124,14 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "offb_node");
   ros::NodeHandle controlnode;
 
-  // the setpoint publishing rate MUST be faster than 2Hz
-  ros::Rate rate(400.0);
+  ros::param::get("/contols_params/safety_limits/xlim/min", x_min);
+  ros::param::get("/contols_params/safety_limits/xlim/max", x_max);
+  ros::param::get("/contols_params/safety_limits/ylim/min", y_min);
+  ros::param::get("/contols_params/safety_limits/ylim/max", y_max);
+  ros::param::get("/contols_params/safety_limits/xlim/min", z_min);
+  ros::param::get("/contols_params/safety_limits/xlim/max", z_max);
+
+  ros::Rate rate(600.0);
   ros::Subscriber state_sub = controlnode.subscribe<mavros_msgs::State>("mavros/state", 10, state_cb);
   ros::Publisher set_vel_pub = controlnode.advertise<mavros_msgs::PositionTarget>("mavros/setpoint_raw/local", 10);
   ros::Publisher local_pos_pub = controlnode.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10);
@@ -180,12 +192,27 @@ int main(int argc, char** argv)
   setDestination(0,0,2.9);
   //move foreward
   setHeading(0);
-  while(local_pos_pub)
+  float tollorance = .35;
+  while(ros::ok())
   {
-      //gym_offset_pub.publish(GYM_OFFSET);
-      local_pos_pub.publish(waypoint);
       ros::spinOnce();
       rate.sleep();
+      float deltaX = abs(waypoint.pose.position.x - current_pose.pose.pose.position.x);
+      float deltaY = abs(waypoint.pose.position.y - current_pose.pose.pose.position.y);
+      float deltaZ = abs(waypoint.pose.position.z - current_pose.pose.pose.position.z);
+      //cout << " dx " << deltaX << " dy " << deltaY << " dz " << deltaZ << endl;
+      float dMag = sqrt( pow(deltaX, 2) + pow(deltaY, 2) + pow(deltaZ, 2) );
+      cout << dMag << endl;
+      if( dMag < tollorance)
+      {
+        continue;
+      }else{
+        local_pos_pub.publish(waypoint);
+      }
+
+      //gym_offset_pub.publish(GYM_OFFSET);
+      
+      
   }
   return 0;
 }
