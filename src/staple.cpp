@@ -33,20 +33,19 @@ void state_cb(const mavros_msgs::State::ConstPtr& msg)
   bool armed = current_state.armed;
 }
 //get current position of drone
-void pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg) 
+void pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
 {
-
   current_pose = *msg;
   ROS_INFO("x: %f y: %f z: %f", current_pose.pose.position.x, current_pose.pose.position.y, current_pose.pose.position.z);
   // ROS_INFO("y: %f", current_pose.pose.position.y);
   // ROS_INFO("z: %f", current_pose.pose.position.z);
 }
-// void pose_cb(const nav_msgs::Odometry::ConstPtr& msg) 
+// void pose_cb(const nav_msgs::Odometry::ConstPtr& msg)
 // {
 //  current_pose = *msg;
 //  ROS_INFO("x: %f y: %f z: %f", current_pose.pose.pose.position.x, current_pose.pose.pose.position.y, current_pose.pose.pose.position.z);
 // }
-//get compass heading 
+//get compass heading
 void heading_cb(const std_msgs::Float64::ConstPtr& msg)
 {
   current_heading = *msg;
@@ -101,7 +100,7 @@ int main(int argc, char** argv)
   ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>("mavros/state", 10, state_cb);
   ros::Publisher set_vel_pub = nh.advertise<mavros_msgs::PositionTarget>("mavros/setpoint_raw/local", 10);
   ros::Publisher local_pos_pub = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10);
-  ros::Subscriber currentPos = nh.subscribe<geometry_msgs::PoseStamped>("/mavros/local_position/pose", 10, pose_cb);
+  ros::Subscriber currentPos = nh.subscribe<geometry_msgs::PoseStamped>("/mavros/global_position/pose", 10, pose_cb);
   ros::Subscriber currentHeading = nh.subscribe<std_msgs::Float64>("/mavros/global_position/compass_hdg", 10, heading_cb);
 
   // allow the subscribers to initialize
@@ -115,7 +114,7 @@ int main(int argc, char** argv)
   {
     ros::spinOnce();
     ros::Duration(0.01).sleep();
-  }  
+  }
 
   //set the orientation of the gym
   GYM_OFFSET = 0;
