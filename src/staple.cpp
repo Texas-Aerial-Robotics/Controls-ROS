@@ -143,8 +143,8 @@ int main(int argc, char** argv)
     ROS_INFO("ARM sent %d", srv_arm_i.response.success);
   else
   {
-    ROS_ERROR("Failed arming/disarming");
-    //return -1;
+    ROS_ERROR("Failed arming");
+    return -1;
   }
 
 
