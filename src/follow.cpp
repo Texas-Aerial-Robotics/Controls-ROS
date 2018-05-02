@@ -3,6 +3,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Odometry.h>
 #include "std_msgs/Float64.h"
+#include "std_msgs/String.h"
 #include <mavros_msgs/CommandBool.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/State.h>
@@ -22,6 +23,7 @@ mavros_msgs::State current_state;
 nav_msgs::Odometry current_pose;
 geometry_msgs::PoseStamped waypoint;
 std_msgs::Float64 current_heading;
+std_msgs::String MODE;
 float GYM_OFFSET;
 float x_min;
 float x_max;
@@ -46,6 +48,11 @@ void heading_cb(const std_msgs::Float64::ConstPtr& msg)
 {
   current_heading = *msg;
   //ROS_INFO("current heading: %f", current_heading.data);
+}
+void mode_cb(const std_msgs::String::ConstPtr& msg)
+{
+  MODE = *msg;
+  ROS_INFO("current mode: %s", MODE.data.c_str());
 }
 //set orientation of the drone (drone should always be level)
 void setHeading(float heading)
@@ -139,7 +146,7 @@ int main(int argc, char** argv)
   ros::Subscriber currentPos = controlnode.subscribe<nav_msgs::Odometry>("mavros/global_position/local", 10, pose_cb);
   ros::Subscriber currentHeading = controlnode.subscribe<std_msgs::Float64>("mavros/global_position/compass_hdg", 10, heading_cb);
   ros::Subscriber waypointSubscrib = controlnode.subscribe<geometry_msgs::PoseStamped>("roombaPose", 10, waypoint_update);
-
+  ros::Subscriber mode_sub = controlnode.subscribe<std_msgs::String>("mode", 1, mode_cb);
   ros::ServiceClient arming_client = controlnode.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
   ros::ServiceClient takeoff_client = controlnode.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/takeoff");
 
@@ -205,6 +212,25 @@ int main(int argc, char** argv)
       cout << dMag << endl;
       if( dMag < tollorance)
       {
+        if(MODE.data == "GOTO")
+        {
+            ros::ServiceClient land_client = controlnode.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/land");
+            mavros_msgs::CommandTOL srv_land;
+            if (land_client.call(srv_land) && srv_land.response.success)
+              ROS_INFO("land sent %d", srv_land.response.success);
+            else
+            {
+              ROS_ERROR("Landing failed");
+              ros::shutdown();
+              return -1;
+            }
+
+            while (ros::ok())
+            {
+              ros::spinOnce();
+              rate.sleep();
+            }
+        }
         continue;
       }else{
         local_pos_pub.publish(waypoint);
