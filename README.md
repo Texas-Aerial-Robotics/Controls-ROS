@@ -61,7 +61,7 @@ cd ~/catkin_ws
 catkin build 
 ```
 
-## 6. Install Ardupilot 
+## 6. Install Ardupilot
 
 In home directory: 
 ```

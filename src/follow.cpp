@@ -3,6 +3,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Odometry.h>
 #include "std_msgs/Float64.h"
+#include "std_msgs/String.h"
 #include <mavros_msgs/CommandBool.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/State.h>
@@ -22,7 +23,14 @@ mavros_msgs::State current_state;
 nav_msgs::Odometry current_pose;
 geometry_msgs::PoseStamped waypoint;
 std_msgs::Float64 current_heading;
+std_msgs::String MODE;
 float GYM_OFFSET;
+float x_min;
+float x_max;
+float y_min;
+float y_max;
+float z_min;
+float z_max;
 
 //get armed state
 void state_cb(const mavros_msgs::State::ConstPtr& msg)
@@ -40,6 +48,11 @@ void heading_cb(const std_msgs::Float64::ConstPtr& msg)
 {
   current_heading = *msg;
   //ROS_INFO("current heading: %f", current_heading.data);
+}
+void mode_cb(const std_msgs::String::ConstPtr& msg)
+{
+  MODE = *msg;
+  ROS_INFO("current mode: %s", MODE.data.c_str());
 }
 //set orientation of the drone (drone should always be level)
 void setHeading(float heading)
@@ -100,8 +113,11 @@ void waypoint_update(const geometry_msgs::PoseStamped::ConstPtr& msg)
   float way_y = waypoint_eval.pose.position.y;
   float way_z = waypoint_eval.pose.position.z;
 
-  if (way_z < 3 && way_x < 3.6 && way_x > -.6 && way_y < 3.6 && way_y > -.6)
+  if (way_z < z_max && way_z > z_min && way_x < x_max && way_x > x_min && way_y < y_max && way_y > y_min)
   {
+        waypoint.pose.position.x = way_x;
+        waypoint.pose.position.y = way_y;
+        waypoint.pose.position.z = way_z;
         setDestination(way_x,way_y,way_z);
   }
   else
@@ -115,22 +131,26 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "offb_node");
   ros::NodeHandle controlnode;
 
-  // the setpoint publishing rate MUST be faster than 2Hz
-  ros::Rate rate(100.0);
+  ros::param::get("/contols_params/safety_limits/xlim/min", x_min);
+  ros::param::get("/contols_params/safety_limits/xlim/max", x_max);
+  ros::param::get("/contols_params/safety_limits/ylim/min", y_min);
+  ros::param::get("/contols_params/safety_limits/ylim/max", y_max);
+  ros::param::get("/contols_params/safety_limits/xlim/min", z_min);
+  ros::param::get("/contols_params/safety_limits/xlim/max", z_max);
+
+  ros::Rate rate(600.0);
   ros::Subscriber state_sub = controlnode.subscribe<mavros_msgs::State>("mavros/state", 10, state_cb);
   ros::Publisher set_vel_pub = controlnode.advertise<mavros_msgs::PositionTarget>("mavros/setpoint_raw/local", 10);
   ros::Publisher local_pos_pub = controlnode.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10);
+  ros::Publisher gym_offset_pub = controlnode.advertise<std_msgs::Float64>("gymOffset", 1);
   ros::Subscriber currentPos = controlnode.subscribe<nav_msgs::Odometry>("mavros/global_position/local", 10, pose_cb);
   ros::Subscriber currentHeading = controlnode.subscribe<std_msgs::Float64>("mavros/global_position/compass_hdg", 10, heading_cb);
-  ros::Subscriber waypointSubscrib = controlnode.subscribe<geometry_msgs::PoseStamped>("waypoint", 10, waypoint_update);
-
+  ros::Subscriber waypointSubscrib = controlnode.subscribe<geometry_msgs::PoseStamped>("roombaPose", 10, waypoint_update);
+  ros::Subscriber mode_sub = controlnode.subscribe<std_msgs::String>("mode", 1, mode_cb);
   ros::ServiceClient arming_client = controlnode.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
   ros::ServiceClient takeoff_client = controlnode.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/takeoff");
 
-  //set the orientation of the gym
-  GYM_OFFSET = current_heading.data;
-  ROS_INFO("the N' axis is facing: %f", GYM_OFFSET);
-  cout << current_heading << "\n" << endl;
+  
 
   // wait for FCU connection
   while (ros::ok() && !current_state.connected)
@@ -139,8 +159,7 @@ int main(int argc, char** argv)
     rate.sleep();
   }
   ROS_INFO("Connected to FCU");
-
-  // wait for mode to be set to guided
+    // wait for mode to be set to guided
   while (current_state.mode != "GUIDED")
   {
     ros::spinOnce();
@@ -148,6 +167,13 @@ int main(int argc, char** argv)
   }
   ROS_INFO("Mode set to GUIDED");
 
+  //set the orientation of the gym
+  GYM_OFFSET = current_heading.data;
+  ROS_INFO("the N' axis is facing: %f", GYM_OFFSET);
+  cout << current_heading << "\n" << endl;
+  std_msgs::Float64 gymOffset;
+  gymOffset.data = GYM_OFFSET;
+  gym_offset_pub.publish(gymOffset);
   // arming
   mavros_msgs::CommandBool arm_request;
   arm_request.request.value = true;
@@ -161,7 +187,8 @@ int main(int argc, char** argv)
 
   //request takeoff
   mavros_msgs::CommandTOL takeoff_request;
-  takeoff_request.request.altitude = 2;
+  takeoff_request.request.altitude = 3;
+
   while (!takeoff_request.response.success)
   {
     ros::Duration(.1).sleep();
@@ -169,14 +196,49 @@ int main(int argc, char** argv)
   }
   ROS_INFO("Takeoff initialized");
   sleep(10);
-
+  setDestination(0,0,2.9);
   //move foreward
   setHeading(0);
-  if (local_pos_pub)
+  float tollorance = .35;
+  while(ros::ok())
   {
-      local_pos_pub.publish(waypoint);
       ros::spinOnce();
       rate.sleep();
+      float deltaX = abs(waypoint.pose.position.x - current_pose.pose.pose.position.x);
+      float deltaY = abs(waypoint.pose.position.y - current_pose.pose.pose.position.y);
+      float deltaZ = abs(waypoint.pose.position.z - current_pose.pose.pose.position.z);
+      //cout << " dx " << deltaX << " dy " << deltaY << " dz " << deltaZ << endl;
+      float dMag = sqrt( pow(deltaX, 2) + pow(deltaY, 2) + pow(deltaZ, 2) );
+      cout << dMag << endl;
+      if( dMag < tollorance)
+      {
+        if(MODE.data == "GOTO")
+        {
+            ros::ServiceClient land_client = controlnode.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/land");
+            mavros_msgs::CommandTOL srv_land;
+            if (land_client.call(srv_land) && srv_land.response.success)
+              ROS_INFO("land sent %d", srv_land.response.success);
+            else
+            {
+              ROS_ERROR("Landing failed");
+              ros::shutdown();
+              return -1;
+            }
+
+            while (ros::ok())
+            {
+              ros::spinOnce();
+              rate.sleep();
+            }
+        }
+        continue;
+      }else{
+        local_pos_pub.publish(waypoint);
+      }
+
+      //gym_offset_pub.publish(GYM_OFFSET);
+      
+      
   }
   return 0;
 }

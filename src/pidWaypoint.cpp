@@ -1,12 +1,7 @@
-/**
- * @file mavros_offboard_velocity_node.cpp
- * @brief MAVROS Offboard Control example node, written with mavros version 0.14.2, px4 flight
- * stack and tested in Gazebo SITL & jMAVSIM.
- */
-
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <mavros_msgs/CommandBool.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/State.h>
@@ -20,11 +15,13 @@
 mavros_msgs::State current_state;
 geometry_msgs::PoseStamped current_pose;
 
-const float POSITION_TOLERANCE = 1;
+const float POSITION_TOLERANCE = 0.1;
+const float ON_TARGET_THRESHOLD = 20;
 
-const float p = 1.0f;
-const float i = 0.0f;
+const float p = 0.2f;
+const float i = 0.0;//005f;
 const float d = 0.0f;
+
 
 void state_cb(const mavros_msgs::State::ConstPtr& msg)
 {
@@ -43,81 +40,7 @@ float get_distance(double x1, double y1, double z1, double x2, double y2, double
   return sqrt(pow(x1-x2, 2) + pow(y1-y2, 2) + pow(z1-z2, 2));
 }
 
-bool go_to_position(ros::NodeHandle* nh, float x, float y, float z){
-  ros::Publisher set_pos_pub = nh->advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10);
-  geometry_msgs::PoseStamped pos;
-
-  pos.pose.position.x = x;
-  pos.pose.position.y = y;
-  pos.pose.position.z = z;
-
-  if (set_pos_pub)
-  {
-
-    printf("Going to position: %f, %f, %f\n", pos.pose.position.x,pos.pose.position.y, pos.pose.position.z);
-
-    set_pos_pub.publish(pos);
-    ros::Duration(.5).sleep();
-    set_pos_pub.publish(pos);
-
-    while(ros::ok() && get_distance(x,y,z,current_pose.pose.position.x, current_pose.pose.position.y, current_pose.pose.position.z) > POSITION_TOLERANCE){
-      float distance = get_distance(x,y,z,current_pose.pose.position.x, current_pose.pose.position.y, current_pose.pose.position.z);
-
-      printf("Current position: %f,%f,%f. Distance: %f\n", 
-                    current_pose.pose.position.x, 
-                    current_pose.pose.position.y, 
-                    current_pose.pose.position.z, 
-                    distance);
-      ros::spinOnce();
-      ros::Duration(.25).sleep();
-    }
-
-    ROS_INFO("Arrived at position");
-  }
-}
-
-bool go_to_position_raw(ros::NodeHandle* nh, float x, float y, float z, float velX, float velY, float velZ){
-  ros::Publisher set_pos_pub = nh->advertise<mavros_msgs::PositionTarget>("mavros/setpoint_raw/local", 10);
-  mavros_msgs::PositionTarget pos;
-
-  pos.position.x = x;
-  pos.position.y = y;
-  pos.position.z = z;
-
-  pos.velocity.x = velX;
-  pos.velocity.y = velY;
-  pos.velocity.z = velZ;
-
-
-  // pos.velocity
-
-  if (set_pos_pub)
-  {
-
-    printf("Going to position: %f, %f, %f\n", pos.position.x,pos.position.y, pos.position.z);
-
-    set_pos_pub.publish(pos);
-    ros::Duration(.5).sleep();
-    set_pos_pub.publish(pos);
-
-    while(ros::ok() && get_distance(x,y,z,current_pose.pose.position.x, current_pose.pose.position.y, current_pose.pose.position.z) > POSITION_TOLERANCE){
-      float distance = get_distance(x,y,z,current_pose.pose.position.x, current_pose.pose.position.y, current_pose.pose.position.z);
-
-      printf("Current position: %f,%f,%f. Distance: %f\n", 
-                    current_pose.pose.position.x, 
-                    current_pose.pose.position.y, 
-                    current_pose.pose.position.z, 
-                    distance);
-      ros::spinOnce();
-      ros::Duration(.25).sleep();
-    }
-
-    ROS_INFO("Arrived at position");
-  }
-}
-
-
-bool go_to_position_pid(ros::NodeHandle* nh, float x, float y, float z){
+void go_to_position_pid(ros::NodeHandle* nh, float x, float y, float z){
   ros::Publisher set_vel_pub = nh->advertise<geometry_msgs::TwistStamped>("mavros/setpoint_velocity/cmd_vel", 10);
   geometry_msgs::TwistStamped vel;
 
@@ -127,11 +50,12 @@ bool go_to_position_pid(ros::NodeHandle* nh, float x, float y, float z){
 
     printf("Going to position: %f, %f, %f\n", x, y, z);
 
-    // set_vel_pub.publish(vel);
-    // ros::Duration(.5).sleep();
-    // set_vel_pub.publish(vel);
+    int onTargetCount = 0;
+    float accumulatedErrorX = 0;
+    float accumulatedErrorY = 0;
+    float accumulatedErrorZ = 0;
 
-    while(ros::ok() && get_distance(x,y,z,current_pose.pose.position.x, current_pose.pose.position.y, current_pose.pose.position.z) > POSITION_TOLERANCE){
+    while(true){
       float distance = get_distance(x,y,z,current_pose.pose.position.x, current_pose.pose.position.y, current_pose.pose.position.z);
 
       printf("Current position: %f,%f,%f. Distance: %f\n", 
@@ -144,9 +68,13 @@ bool go_to_position_pid(ros::NodeHandle* nh, float x, float y, float z){
       float errorY = y - current_pose.pose.position.y;
       float errorZ = z - current_pose.pose.position.z;
 
-      float velX = errorX * p;
-      float velY = errorY * p;
-      float velZ = errorZ * p;
+      accumulatedErrorX += errorX;
+      accumulatedErrorY += errorY;
+      accumulatedErrorZ += errorZ;
+
+      float velX = errorX*p + accumulatedErrorX*i;
+      float velY = errorY*p + accumulatedErrorY*i;
+      float velZ = errorZ*p + accumulatedErrorZ*i;
 
       vel.twist.linear.x = velX;
       vel.twist.linear.y = velY;
@@ -171,6 +99,14 @@ bool go_to_position_pid(ros::NodeHandle* nh, float x, float y, float z){
       set_vel_pub.publish(vel);
       sleep(0.5);
       set_vel_pub.publish(vel);
+
+      if(distance < POSITION_TOLERANCE){
+        onTargetCount++;
+      }
+
+      if(onTargetCount > ON_TARGET_THRESHOLD){
+        break;
+      }
 
       ros::spinOnce();
       ros::Duration(0.1).sleep();
@@ -258,25 +194,7 @@ int main(int argc, char** argv)
 
   sleep(5);
 
-  // ROS_INFO("Going to position 2");
-  // go_to_position(&nh, -5,5,3, 10);
   
-  // sleep(5);
-
-  // ROS_INFO("Going to position 3");
-  // go_to_position(&nh, -5,-5, 3, 10);
-
-  // sleep(5);
-
-  // ROS_INFO("Going to position 4");
-  // go_to_position(&nh, 5, -5, 3, 10);
-
-  // sleep(5);
-
-  // ROS_INFO("Going to position 5");
-  // go_to_position(&nh, 0, 0, 3, 10);
-
-
   while (ros::ok())
   {
     ros::spinOnce();

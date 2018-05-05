@@ -19,7 +19,8 @@ using namespace std;
 
 //Set global variables
 mavros_msgs::State current_state;
-nav_msgs::Odometry current_pose;
+//nav_msgs::Odometry current_pose;
+geometry_msgs::PoseStamped current_pose;
 geometry_msgs::PoseStamped pose;
 std_msgs::Float64 current_heading;
 float GYM_OFFSET;
@@ -32,12 +33,19 @@ void state_cb(const mavros_msgs::State::ConstPtr& msg)
   bool armed = current_state.armed;
 }
 //get current position of drone
-void pose_cb(const nav_msgs::Odometry::ConstPtr& msg) 
+void pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
 {
-	current_pose = *msg;
-	ROS_INFO("x: %f y: %f z: %f", current_pose.pose.pose.position.x, current_pose.pose.pose.position.y, current_pose.pose.pose.position.z);
+  current_pose = *msg;
+  ROS_INFO("x: %f y: %f z: %f", current_pose.pose.position.x, current_pose.pose.position.y, current_pose.pose.position.z);
+  // ROS_INFO("y: %f", current_pose.pose.position.y);
+  // ROS_INFO("z: %f", current_pose.pose.position.z);
 }
-//get compass heading 
+// void pose_cb(const nav_msgs::Odometry::ConstPtr& msg)
+// {
+//  current_pose = *msg;
+//  ROS_INFO("x: %f y: %f z: %f", current_pose.pose.pose.position.x, current_pose.pose.pose.position.y, current_pose.pose.pose.position.z);
+// }
+//get compass heading
 void heading_cb(const std_msgs::Float64::ConstPtr& msg)
 {
   current_heading = *msg;
@@ -92,7 +100,7 @@ int main(int argc, char** argv)
   ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>("mavros/state", 10, state_cb);
   ros::Publisher set_vel_pub = nh.advertise<mavros_msgs::PositionTarget>("mavros/setpoint_raw/local", 10);
   ros::Publisher local_pos_pub = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10);
-  ros::Subscriber currentPos = nh.subscribe<nav_msgs::Odometry>("mavros/global_position/local", 10, pose_cb);
+  ros::Subscriber currentPos = nh.subscribe<geometry_msgs::PoseStamped>("/mavros/global_position/pose", 10, pose_cb);
   ros::Subscriber currentHeading = nh.subscribe<std_msgs::Float64>("/mavros/global_position/compass_hdg", 10, heading_cb);
 
   // allow the subscribers to initialize
@@ -106,12 +114,19 @@ int main(int argc, char** argv)
   {
     ros::spinOnce();
     ros::Duration(0.01).sleep();
-  }  
+  }
 
   //set the orientation of the gym
-  GYM_OFFSET = current_heading.data;
+  GYM_OFFSET = 0;
+  for (int i = 1; i <= 30; ++i) {
+    ros::spinOnce();
+    ros::Duration(0.1).sleep();
+    GYM_OFFSET += current_heading.data;
+    ROS_INFO("current heading%d: %f", i, GYM_OFFSET/i);
+  }
+  GYM_OFFSET /= 30;
   ROS_INFO("the N' axis is facing: %f", GYM_OFFSET);
-  cout << current_heading << "\n" << endl;
+  cout << GYM_OFFSET << "\n" << endl;
 
   // wait for FCU connection
   while (ros::ok() && !current_state.connected)
@@ -119,18 +134,6 @@ int main(int argc, char** argv)
     ros::spinOnce();
     rate.sleep();
   }
-
-  //set flight mode to guided
-  // ros::ServiceClient set_mode_client = nh.serviceClient<mavros_msgs::SetMode>("/mavros/set_mode");
-  // mavros_msgs::SetMode srv_setMode;
-  // srv_setMode.request.base_mode = 0;
-  // srv_setMode.request.custom_mode = "GUIDED";
-  // if(set_mode_client.call(srv_setMode)){
-  //   ROS_INFO("setmode send ok");
-  // }else{
-  //   ROS_ERROR("Failed SetMode");
-  //   return -1;
-  // }
 
   // arming
   ros::ServiceClient arming_client_i = nh.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
@@ -140,8 +143,8 @@ int main(int argc, char** argv)
     ROS_INFO("ARM sent %d", srv_arm_i.response.success);
   else
   {
-    ROS_ERROR("Failed arming/disarming");
-    //return -1;
+    ROS_ERROR("Failed arming");
+    return -1;
   }
 
 
@@ -158,22 +161,11 @@ int main(int argc, char** argv)
 
   sleep(10);
 
-  
-  // mavros_msgs::SetMode offb_set_mode;
-  // offb_set_mode.request.custom_mode = "GUIDED";
-  // 
-  // if (set_mode_client.call(offb_set_mode) && offb_set_mode.response.mode_sent)
-  //   ROS_INFO("OFFBOARD enabled");
-  // else
-  // {
-  //   ROS_INFO("unable to switch to offboard");
-  //   return -1;
-  // }
 
   //move foreward
   setHeading(0);
   setDestination(0, 2, 1.5);
-  float tollorance = .08;
+  float tollorance = .35;
   if (local_pos_pub)
   {
 
@@ -181,12 +173,23 @@ int main(int argc, char** argv)
     {
 
       local_pos_pub.publish(pose);
-      float percentErrorX = abs((pose.pose.position.x - current_pose.pose.pose.position.x)/(pose.pose.position.x));
-      float percentErrorY = abs((pose.pose.position.y - current_pose.pose.pose.position.y)/(pose.pose.position.y));
-      float percentErrorZ = abs((pose.pose.position.z - current_pose.pose.pose.position.z)/(pose.pose.position.z));
-      if(percentErrorX < tollorance && percentErrorY < tollorance && percentErrorZ < tollorance)
+      // float percentErrorX = abs((pose.pose.position.x - current_pose.pose.position.x)/(pose.pose.position.x));
+      // float percentErrorY = abs((pose.pose.position.y - current_pose.pose.position.y)/(pose.pose.position.y));
+      // float percentErrorZ = abs((pose.pose.position.z - current_pose.pose.position.z)/(pose.pose.position.z));
+      // cout << " px " << percentErrorX << " py " << percentErrorY << " pz " << percentErrorZ << endl;
+      // if(percentErrorX < tollorance && percentErrorY < tollorance && percentErrorZ < tollorance)
+      // {
+      //   break;
+      // }
+      float deltaX = abs(pose.pose.position.x - current_pose.pose.position.x);
+      float deltaY = abs(pose.pose.position.y - current_pose.pose.position.y);
+      float deltaZ = abs(pose.pose.position.z - current_pose.pose.position.z);
+      //cout << " dx " << deltaX << " dy " << deltaY << " dz " << deltaZ << endl;
+      float dMag = sqrt( pow(deltaX, 2) + pow(deltaY, 2) + pow(deltaZ, 2) );
+      cout << dMag << endl;
+      if( dMag < tollorance)
       {
-      	break;
+        break;
       }
       ros::spinOnce();
       ros::Duration(0.5).sleep();
