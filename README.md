@@ -66,7 +66,7 @@ catkin build
 In home directory: 
 ```
 cd ~
-git clone git://github.com/ArduPilot/ardupilot.git
+git clone git@github.com:Texas-Aerial-Robotics/ardupilot.git
 cd ardupilot  
 git submodule update --init --recursive
 ```
