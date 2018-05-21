@@ -273,7 +273,7 @@ rosrun flight_pkg staple
 
 then in mavproxy switch the mode into `guided`
 
-you did it!
+you did it! 🎉
 
 --- 
 
