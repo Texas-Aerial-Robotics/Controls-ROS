@@ -168,9 +168,16 @@ int main(int argc, char** argv)
   ROS_INFO("Mode set to GUIDED");
 
   //set the orientation of the gym
-  GYM_OFFSET = current_heading.data;
+  GYM_OFFSET = 0;
+  for (int i = 1; i <= 30; ++i) {
+    ros::spinOnce();
+    ros::Duration(0.1).sleep();
+    GYM_OFFSET += current_heading.data;
+    ROS_INFO("current heading%d: %f", i, GYM_OFFSET/i);
+  }
+  GYM_OFFSET /= 30;
   ROS_INFO("the N' axis is facing: %f", GYM_OFFSET);
-  cout << current_heading << "\n" << endl;
+  cout << GYM_OFFSET << "\n" << endl;
   std_msgs::Float64 gymOffset;
   gymOffset.data = GYM_OFFSET;
   gym_offset_pub.publish(gymOffset);
@@ -187,7 +194,7 @@ int main(int argc, char** argv)
 
   //request takeoff
   mavros_msgs::CommandTOL takeoff_request;
-  takeoff_request.request.altitude = 2;
+  takeoff_request.request.altitude = 1.5;
 
   while (!takeoff_request.response.success)
   {
@@ -196,7 +203,7 @@ int main(int argc, char** argv)
   }
   ROS_INFO("Takeoff initialized");
   sleep(10);
-  setDestination(0,0,2);
+  setDestination(0,0,1.5);
   //move foreward
   setHeading(0);
   float tollorance = .35;
