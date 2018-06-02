@@ -69,7 +69,7 @@ find_package(catkin REQUIRED COMPONENTS
 generate_messages(
    DEPENDENCIES
    std_msgs  # Or other packages containing msgs
- 
+
 )
 
 ################################################
@@ -172,6 +172,9 @@ target_link_libraries(hover ${catkin_LIBRARIES})
 
 add_executable(RoombaFollow src/follow.cpp)
 target_link_libraries(RoombaFollow ${catkin_LIBRARIES})
+
+add_executable(RoombaFollowScan src/followWithScan.cpp)
+target_link_libraries(RoombaFollowScan ${catkin_LIBRARIES})
 
 #add_executable(darknetSub src/examples/darknetSub.cpp)
 #target_link_libraries(darknetSub ${catkin_LIBRARIES})
