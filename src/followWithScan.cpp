@@ -44,7 +44,7 @@ void state_cb(const mavros_msgs::State::ConstPtr& msg)
 void pose_cb(const nav_msgs::Odometry::ConstPtr& msg)
 {
 	current_pose = *msg;
-	ROS_INFO("x: %f y: %f x: %f", current_pose.pose.pose.position.x, current_pose.pose.pose.position.y, current_pose.pose.pose.position.z);
+	ROS_INFO("x: %f y: %f z: %f", current_pose.pose.pose.position.x, current_pose.pose.pose.position.y, current_pose.pose.pose.position.z);
 }
 //get compass heading
 void heading_cb(const std_msgs::Float64::ConstPtr& msg)
@@ -97,7 +97,7 @@ void setDestination(float x, float y, float z)
   waypoint.pose.position.x = X;
   waypoint.pose.position.y = Y;
   waypoint.pose.position.z = Z;
-  ROS_INFO("Destination set to x: %f y: %f z %f", X, Y, Z);
+  ROS_INFO("Destination set to x: %f y: %f z: %f", X, Y, Z);
 }
 
 //initialize ROS
@@ -219,20 +219,41 @@ int main(int argc, char** argv)
   {
       ros::spinOnce();
 
-      int index = 0;
-	  while(current_2D_scan.ranges[index] > 1 && index < 1024) {
-	  	index++;
+      rate.sleep();
+
+      int umerindex = 2;
+	  while(((current_2D_scan.ranges[umerindex-2] > 1)  ||
+	         (current_2D_scan.ranges[umerindex-1] > 1)  ||
+	         (current_2D_scan.ranges[umerindex+0] > 1)  ||
+	         (current_2D_scan.ranges[umerindex+1] > 1)  ||
+	         (current_2D_scan.ranges[umerindex+2] > 1)) &&
+	         ((umerindex + 2) < 1024)
+	        ) {
+	  	umerindex++;
+        ros::spinOnce();
+        if (current_2D_scan.ranges[umerindex] < 3)
+        {
+          	ROS_INFO("Index[%d]: %f", umerindex, current_2D_scan.ranges[umerindex]);
+        }
 	  }
-	  if (index < 1023 && index > 0)
+	  if (umerindex < 1023 && umerindex > 0 && current_2D_scan.ranges[umerindex] < 1)
 	  {
-		double angle_of_obstacle_RAD = current_2D_scan.angle_increment*index;
-		ROS_INFO("x: %f y: %f x: %f", current_pose.pose.pose.position.x, current_pose.pose.pose.position.y, current_pose.pose.pose.position.z);
-		ROS_INFO("Obstacle sighted @%f (0-2pi)", angle_of_obstacle_RAD);
+		double angle_of_obstacle_RAD = current_2D_scan.angle_increment*umerindex;
+		// ROS_INFO("x: %f y: %f x: %f", current_pose.pose.pose.position.x, current_pose.pose.pose.position.y, current_pose.pose.pose.position.z);
+		ROS_INFO("Obstacle sighted @%f (current_2D_scan.angle_increment: %f * umerindex: %d)", angle_of_obstacle_RAD, current_2D_scan.angle_increment, umerindex);
 		ROS_INFO("SKRTT SKRTT");
-		setDestination(current_pose.pose.pose.position.x, current_pose.pose.pose.position.y, 2.8);
+
+		double radius = current_2D_scan.ranges[umerindex];
+		double why = radius * cos(angle_of_obstacle_RAD);
+		double ex = radius * sin(angle_of_obstacle_RAD);
+
+		ROS_INFO("radius: %f, ex: %f, why: %f", radius, ex, why);
+
+		// setDestination(current_pose.pose.pose.position.x, current_pose.pose.pose.position.y, 2.8);
+		setDestination((current_pose.pose.pose.position.x + ex*(-1.328)), (current_pose.pose.pose.position.y + why*(-1.328)), current_pose.pose.pose.position.z);
+        rate.sleep();rate.sleep();rate.sleep();
 	  }
 
-      rate.sleep();
       float deltaX = abs(waypoint.pose.position.x - current_pose.pose.pose.position.x);
       float deltaY = abs(waypoint.pose.position.y - current_pose.pose.pose.position.y);
       float deltaZ = abs(waypoint.pose.position.z - current_pose.pose.pose.position.z);

@@ -49,7 +49,7 @@ int main(int argc, char **argv)
     rate.sleep();
   }
 
-  ros::Duration(10.0).sleep();
+  ros::Duration(2.0).sleep();
 
 
   // double latitude = 30.2672;
@@ -79,7 +79,7 @@ int main(int argc, char **argv)
   origin_pub.publish(packedMsg);
 
 
-  ros::Duration(10.0).sleep();
+  ros::Duration(2.0).sleep();
   mavros_msgs::CommandHome set_home_req;
   set_home_req.request.current_gps = false;
   set_home_req.request.latitude = latitude;
@@ -88,6 +88,6 @@ int main(int argc, char **argv)
 
   ros::service::call("/mavros/cmd/set_home", set_home_req);
 
-  printf("Result was %d\n", set_home_req.response.result); 
+  printf("Result was %d\n", set_home_req.response.result);
 
 }
