@@ -44,7 +44,7 @@ void state_cb(const mavros_msgs::State::ConstPtr& msg)
 void pose_cb(const nav_msgs::Odometry::ConstPtr& msg)
 {
 	current_pose = *msg;
-	ROS_INFO("x: %f y: %f z: %f", current_pose.pose.pose.position.x, current_pose.pose.pose.position.y, current_pose.pose.pose.position.z);
+	//ROS_INFO("x: %f y: %f z: %f", current_pose.pose.pose.position.x, current_pose.pose.pose.position.y, current_pose.pose.pose.position.z);
 }
 //get compass heading
 void heading_cb(const std_msgs::Float64::ConstPtr& msg)
@@ -215,26 +215,28 @@ int main(int argc, char** argv)
   //move foreward
   setHeading(0);
   float tollorance = .35;
+  float minRange = .35;
+  float maxRange = 1;
   while(ros::ok())
   {
+    ros::spinOnce();
+
+    rate.sleep();
+
+    int umerindex = 2;
+	  while( ((umerindex + 2) < 1024)) {
+  	  umerindex++;
       ros::spinOnce();
 
-      rate.sleep();
 
-      int umerindex = 2;
-	  while(((current_2D_scan.ranges[umerindex-2] > 1)  ||
-	         (current_2D_scan.ranges[umerindex-1] > 1)  ||
-	         (current_2D_scan.ranges[umerindex+0] > 1)  ||
-	         (current_2D_scan.ranges[umerindex+1] > 1)  ||
-	         (current_2D_scan.ranges[umerindex+2] > 1)) &&
-	         ((umerindex + 2) < 1024)
-	        ) {
-	  	umerindex++;
-        ros::spinOnce();
-        if (current_2D_scan.ranges[umerindex] < 3)
-        {
-          	ROS_INFO("Index[%d]: %f", umerindex, current_2D_scan.ranges[umerindex]);
-        }
+      if( (((current_2D_scan.ranges[umerindex-2] < maxRange) && (current_2D_scan.ranges[umerindex-2] > minRange))  && ((current_2D_scan.ranges[umerindex-1] < maxRange) && (current_2D_scan.ranges[umerindex-1] > minRange)) && ((current_2D_scan.ranges[umerindex+0] < maxRange) && (current_2D_scan.ranges[umerindex+0] > minRange))  && ((current_2D_scan.ranges[umerindex+1] < maxRange) && (current_2D_scan.ranges[umerindex+1] > minRange)) && ((current_2D_scan.ranges[umerindex+2] < maxRange) && (current_2D_scan.ranges[umerindex+2] > minRange))) )
+      {
+        break;
+      }
+      if (current_2D_scan.ranges[umerindex] < maxRange && current_2D_scan.ranges[umerindex] > minRange)
+      {
+        	ROS_INFO("Index[%d]: %f", umerindex, current_2D_scan.ranges[umerindex]);
+      }
 	  }
 	  if (umerindex < 1023 && umerindex > 0 && current_2D_scan.ranges[umerindex] < 1)
 	  {
@@ -243,14 +245,21 @@ int main(int argc, char** argv)
 		ROS_INFO("Obstacle sighted @%f (current_2D_scan.angle_increment: %f * umerindex: %d)", angle_of_obstacle_RAD, current_2D_scan.angle_increment, umerindex);
 		ROS_INFO("SKRTT SKRTT");
 
+    //get current position in gym frame
+    float deg2rad = (M_PI/180);
+    float X = current_pose.pose.pose.position.x*cos(GYM_OFFSET*deg2rad) - current_pose.pose.pose.position.y*sin(GYM_OFFSET*deg2rad);
+    float Y = current_pose.pose.pose.position.x*sin(GYM_OFFSET*deg2rad) + current_pose.pose.pose.position.y*cos(GYM_OFFSET*deg2rad);
+    float Z = 1.5;
+    ROS_INFO("x: %f y: %f z: %f", X, Y, Z);
+
 		double radius = current_2D_scan.ranges[umerindex];
-		double why = radius * cos(angle_of_obstacle_RAD);
-		double ex = radius * sin(angle_of_obstacle_RAD);
+		double why = radius * sin(angle_of_obstacle_RAD);
+		double ex = radius * cos(angle_of_obstacle_RAD);
 
 		ROS_INFO("radius: %f, ex: %f, why: %f", radius, ex, why);
 
 		// setDestination(current_pose.pose.pose.position.x, current_pose.pose.pose.position.y, 2.8);
-		setDestination((current_pose.pose.pose.position.x + ex*(-1.328)), (current_pose.pose.pose.position.y + why*(-1.328)), current_pose.pose.pose.position.z);
+		setDestination((X + (ex/radius)*(-1.328)), (Y + (why/radius)*(-1.328)), 1.5);
         rate.sleep();rate.sleep();rate.sleep();
 	  }
 
@@ -259,7 +268,7 @@ int main(int argc, char** argv)
       float deltaZ = abs(waypoint.pose.position.z - current_pose.pose.pose.position.z);
       //cout << " dx " << deltaX << " dy " << deltaY << " dz " << deltaZ << endl;
       float dMag = sqrt( pow(deltaX, 2) + pow(deltaY, 2) + pow(deltaZ, 2) );
-      cout << dMag << endl;
+      //cout << dMag << endl;
       if( dMag < tollorance )
       {
         if(MODE.data == "GOTO")
