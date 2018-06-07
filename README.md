@@ -85,6 +85,7 @@ In home directory:
 cd ~
 git clone https://github.com/Texas-Aerial-Robotics/ardupilot.git
 cd ardupilot  
+git checkout Copter-3.5
 git submodule update --init --recursive
 ```
 
