@@ -44,13 +44,13 @@ void state_cb(const mavros_msgs::State::ConstPtr& msg)
 void pose_cb(const nav_msgs::Odometry::ConstPtr& msg)
 {
 	current_pose = *msg;
-	//ROS_INFO("x: %f y: %f z: %f", current_pose.pose.pose.position.x, current_pose.pose.pose.position.y, current_pose.pose.pose.position.z);
+	// ROS_INFO("x: %f y: %f z: %f", current_pose.pose.pose.position.x, current_pose.pose.pose.position.y, current_pose.pose.pose.position.z);
 }
 //get compass heading
 void heading_cb(const std_msgs::Float64::ConstPtr& msg)
 {
   current_heading = *msg;
-  //ROS_INFO("current heading: %f", current_heading.data);
+  // ROS_INFO("current heading: %f", current_heading.data);
 }
 void mode_cb(const std_msgs::String::ConstPtr& msg)
 {
@@ -159,7 +159,6 @@ int main(int argc, char** argv)
   ros::ServiceClient takeoff_client = controlnode.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/takeoff");
 
 
-
   // wait for FCU connection
   while (ros::ok() && !current_state.connected)
   {
@@ -181,7 +180,7 @@ int main(int argc, char** argv)
     ros::spinOnce();
     ros::Duration(0.1).sleep();
     GYM_OFFSET += current_heading.data;
-    ROS_INFO("current heading%d: %f", i, GYM_OFFSET/i);
+    // ROS_INFO("current heading%d: %f", i, GYM_OFFSET/i);
   }
   GYM_OFFSET /= 30;
   ROS_INFO("the N' axis is facing: %f", GYM_OFFSET);
@@ -215,60 +214,64 @@ int main(int argc, char** argv)
   //move foreward
   setHeading(0);
   float tollorance = .35;
-  float minRange = .35;
-  float maxRange = 1;
+  float scanMinRange = .35;
+  float scanMaxRange = 1;
   while(ros::ok())
   {
     ros::spinOnce();
 
     rate.sleep();
 
-    int umerindex = 2;
-	  while( ((umerindex + 2) < 1024)) {
-  	  umerindex++;
+    int scanRayIndex = 2;
+	  while(((scanRayIndex+2) < 1024)) {
+  	  scanRayIndex++;
       ros::spinOnce();
 
-
-      if( (((current_2D_scan.ranges[umerindex-2] < maxRange) && (current_2D_scan.ranges[umerindex-2] > minRange))  && ((current_2D_scan.ranges[umerindex-1] < maxRange) && (current_2D_scan.ranges[umerindex-1] > minRange)) && ((current_2D_scan.ranges[umerindex+0] < maxRange) && (current_2D_scan.ranges[umerindex+0] > minRange))  && ((current_2D_scan.ranges[umerindex+1] < maxRange) && (current_2D_scan.ranges[umerindex+1] > minRange)) && ((current_2D_scan.ranges[umerindex+2] < maxRange) && (current_2D_scan.ranges[umerindex+2] > minRange))) )
+      // check if 5 consecutive readings are in bounds we care about
+      if((((current_2D_scan.ranges[scanRayIndex-2] < scanMaxRange) && (current_2D_scan.ranges[scanRayIndex-2] > scanMinRange)) &&
+          ((current_2D_scan.ranges[scanRayIndex-1] < scanMaxRange) && (current_2D_scan.ranges[scanRayIndex-1] > scanMinRange)) &&
+          ((current_2D_scan.ranges[scanRayIndex+0] < scanMaxRange) && (current_2D_scan.ranges[scanRayIndex+0] > scanMinRange)) &&
+          ((current_2D_scan.ranges[scanRayIndex+1] < scanMaxRange) && (current_2D_scan.ranges[scanRayIndex+1] > scanMinRange)) &&
+          ((current_2D_scan.ranges[scanRayIndex+2] < scanMaxRange) && (current_2D_scan.ranges[scanRayIndex+2] > scanMinRange))))
       {
         break;
       }
-      if (current_2D_scan.ranges[umerindex] < maxRange && current_2D_scan.ranges[umerindex] > minRange)
+      if(current_2D_scan.ranges[scanRayIndex] < scanMaxRange && current_2D_scan.ranges[scanRayIndex] > scanMinRange)
       {
-        	ROS_INFO("Index[%d]: %f", umerindex, current_2D_scan.ranges[umerindex]);
+        	ROS_INFO("Index[%d]: %f", scanRayIndex, current_2D_scan.ranges[scanRayIndex]);
       }
 	  }
-	  if (umerindex < 1023 && umerindex > 0 && current_2D_scan.ranges[umerindex] < 1)
+	  if (scanRayIndex < 1023 && scanRayIndex > 0 && current_2D_scan.ranges[scanRayIndex] < 1)
 	  {
-		double angle_of_obstacle_RAD = current_2D_scan.angle_increment*umerindex;
-		// ROS_INFO("x: %f y: %f x: %f", current_pose.pose.pose.position.x, current_pose.pose.pose.position.y, current_pose.pose.pose.position.z);
-		ROS_INFO("Obstacle sighted @%f (current_2D_scan.angle_increment: %f * umerindex: %d)", angle_of_obstacle_RAD, current_2D_scan.angle_increment, umerindex);
-		ROS_INFO("SKRTT SKRTT");
+  		double angle_of_obstacle_RAD = current_2D_scan.angle_increment*scanRayIndex;
+  		ROS_INFO("Obstacle sighted @%f (current_2D_scan.angle_increment: %f * scanRayIndex: %d)", angle_of_obstacle_RAD, current_2D_scan.angle_increment, scanRayIndex);
+  		ROS_INFO("SKRTT SKRTT");
 
-    //get current position in gym frame
-    float deg2rad = (M_PI/180);
-    float X = current_pose.pose.pose.position.x*cos(GYM_OFFSET*deg2rad) - current_pose.pose.pose.position.y*sin(GYM_OFFSET*deg2rad);
-    float Y = current_pose.pose.pose.position.x*sin(GYM_OFFSET*deg2rad) + current_pose.pose.pose.position.y*cos(GYM_OFFSET*deg2rad);
-    float Z = 1.5;
-    ROS_INFO("x: %f y: %f z: %f", X, Y, Z);
+      //get current position in gym frame
+      float deg2rad = (M_PI/180);
+      float X = current_pose.pose.pose.position.x*cos(GYM_OFFSET*deg2rad) - current_pose.pose.pose.position.y*sin(GYM_OFFSET*deg2rad);
+      float Y = current_pose.pose.pose.position.x*sin(GYM_OFFSET*deg2rad) + current_pose.pose.pose.position.y*cos(GYM_OFFSET*deg2rad);
+      float Z = 1.5;
+      ROS_INFO("x: %f y: %f z: %f", X, Y, Z);
 
-		double radius = current_2D_scan.ranges[umerindex];
-		double why = radius * sin(angle_of_obstacle_RAD);
-		double ex = radius * cos(angle_of_obstacle_RAD);
+  		double radius = current_2D_scan.ranges[umerindex];
+  		double why = radius * sin(angle_of_obstacle_RAD);
+  		double ex = radius * cos(angle_of_obstacle_RAD);
 
-		ROS_INFO("radius: %f, ex: %f, why: %f", radius, ex, why);
+  		ROS_INFO("radius: %f, ex: %f, why: %f", radius, ex, why);
 
-		// setDestination(current_pose.pose.pose.position.x, current_pose.pose.pose.position.y, 2.8);
-		setDestination((X + (ex/radius)*(-1.328)), (Y + (why/radius)*(-1.328)), 1.5);
-        rate.sleep();rate.sleep();rate.sleep();
+  		setDestination((X + (ex/radius)*(-1.328)), (Y + (why/radius)*(-1.328)), Z);
+      rate.sleep();
+      rate.sleep();
+      rate.sleep();
 	  }
 
       float deltaX = abs(waypoint.pose.position.x - current_pose.pose.pose.position.x);
       float deltaY = abs(waypoint.pose.position.y - current_pose.pose.pose.position.y);
       float deltaZ = abs(waypoint.pose.position.z - current_pose.pose.pose.position.z);
-      //cout << " dx " << deltaX << " dy " << deltaY << " dz " << deltaZ << endl;
+      // cout << " dx " << deltaX << " dy " << deltaY << " dz " << deltaZ << endl;
       float dMag = sqrt( pow(deltaX, 2) + pow(deltaY, 2) + pow(deltaZ, 2) );
-      //cout << dMag << endl;
+      // cout << dMag << endl;
       if( dMag < tollorance )
       {
         if(MODE.data == "GOTO")
@@ -296,8 +299,6 @@ int main(int argc, char** argv)
       }
 
       //gym_offset_pub.publish(GYM_OFFSET);
-
-
   }
   return 0;
 }
