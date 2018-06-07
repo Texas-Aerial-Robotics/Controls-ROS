@@ -254,7 +254,7 @@ int main(int argc, char** argv)
       float Z = 1.5;
       ROS_INFO("x: %f y: %f z: %f", X, Y, Z);
 
-  		double radius = current_2D_scan.ranges[umerindex];
+  		double radius = current_2D_scan.ranges[scanRayIndex];
   		double why = radius * sin(angle_of_obstacle_RAD);
   		double ex = radius * cos(angle_of_obstacle_RAD);
 
