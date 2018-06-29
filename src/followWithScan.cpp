@@ -214,8 +214,8 @@ int main(int argc, char** argv)
   //move foreward
   setHeading(0);
   float tollorance = .35;
-  float scanMinRange = .35;
-  float scanMaxRange = 1;
+  float scanMinRange = .45;
+  float scanMaxRange = 1.25;
   while(ros::ok())
   {
     ros::spinOnce();
@@ -241,7 +241,7 @@ int main(int argc, char** argv)
         	ROS_INFO("Index[%d]: %f", scanRayIndex, current_2D_scan.ranges[scanRayIndex]);
       }
 	  }
-	  if (scanRayIndex < 1023 && scanRayIndex > 0 && current_2D_scan.ranges[scanRayIndex] < 1)
+	  if (scanRayIndex < 1023 && scanRayIndex > 0 && current_2D_scan.ranges[scanRayIndex] < scanMaxRange && current_2D_scan.ranges[scanRayIndex] > scanMinRange)
 	  {
   		double angle_of_obstacle_RAD = current_2D_scan.angle_increment*scanRayIndex;
   		ROS_INFO("Obstacle sighted @%f (current_2D_scan.angle_increment: %f * scanRayIndex: %d)", angle_of_obstacle_RAD, current_2D_scan.angle_increment, scanRayIndex);
