@@ -34,6 +34,7 @@ float y_min;
 float y_max;
 float z_min;
 float z_max;
+double RUN_START_TIME = 0;
 
 //get armed state
 void state_cb(const mavros_msgs::State::ConstPtr& msg)
@@ -150,6 +151,7 @@ int main(int argc, char** argv)
   ros::Publisher set_vel_pub = controlnode.advertise<mavros_msgs::PositionTarget>("mavros/setpoint_raw/local", 10);
   ros::Publisher local_pos_pub = controlnode.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10);
   ros::Publisher gym_offset_pub = controlnode.advertise<std_msgs::Float64>("gymOffset", 1);
+  ros::Publisher run_start_pub = controlnode.advertise<std_msgs::Float64>("runStartTime", 1);
   ros::Subscriber currentPos = controlnode.subscribe<nav_msgs::Odometry>("mavros/global_position/local", 10, pose_cb);
   ros::Subscriber currentHeading = controlnode.subscribe<std_msgs::Float64>("mavros/global_position/compass_hdg", 10, heading_cb);
   ros::Subscriber waypointSubscrib = controlnode.subscribe<geometry_msgs::PoseStamped>("waypoint", 10, waypoint_update);
@@ -171,7 +173,13 @@ int main(int argc, char** argv)
   {
     ros::spinOnce();
     rate.sleep();
+
+    RUN_START_TIME = ros::Time::now().toSec();
   }
+  std_msgs::Float64 runStartTime;
+  runStartTime.data = RUN_START_TIME;
+  run_start_pub.publish(runStartTime);
+  ROS_INFO("Run start time %f", RUN_START_TIME);
   ROS_INFO("Mode set to GUIDED");
 
   //set the orientation of the gym
