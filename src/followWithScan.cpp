@@ -23,7 +23,6 @@ using namespace std;
 mavros_msgs::State current_state;
 nav_msgs::Odometry current_pose;
 geometry_msgs::PoseStamped waypoint;
-std_msgs::Float64 current_heading;
 sensor_msgs::LaserScan current_2D_scan;
 
 std_msgs::String MODE;
@@ -46,12 +45,6 @@ void pose_cb(const nav_msgs::Odometry::ConstPtr& msg)
 {
 	current_pose = *msg;
 	// ROS_INFO("x: %f y: %f z: %f", current_pose.pose.pose.position.x, current_pose.pose.pose.position.y, current_pose.pose.pose.position.z);
-}
-//get compass heading
-void heading_cb(const std_msgs::Float64::ConstPtr& msg)
-{
-  current_heading = *msg;
-  // ROS_INFO("current heading: %f", current_heading.data);
 }
 void mode_cb(const std_msgs::String::ConstPtr& msg)
 {
@@ -153,7 +146,6 @@ int main(int argc, char** argv)
   ros::Publisher gym_offset_pub = controlnode.advertise<std_msgs::Float64>("gymOffset", 1);
   ros::Publisher run_start_pub = controlnode.advertise<std_msgs::Float64>("runStartTime", 1);
   ros::Subscriber currentPos = controlnode.subscribe<nav_msgs::Odometry>("mavros/global_position/local", 10, pose_cb);
-  ros::Subscriber currentHeading = controlnode.subscribe<std_msgs::Float64>("mavros/global_position/compass_hdg", 10, heading_cb);
   ros::Subscriber waypointSubscrib = controlnode.subscribe<geometry_msgs::PoseStamped>("waypoint", 10, waypoint_update);
   ros::Subscriber mode_sub = controlnode.subscribe<std_msgs::String>("mode", 10, mode_cb);
   ros::Subscriber collision_sub = controlnode.subscribe<sensor_msgs::LaserScan>("spur/laser/scan", 1, scan_cb);
@@ -187,15 +179,24 @@ int main(int argc, char** argv)
   for (int i = 1; i <= 30; ++i) {
     ros::spinOnce();
     ros::Duration(0.1).sleep();
-    GYM_OFFSET += current_heading.data;
+
+    float q0 = current_pose.pose.pose.orientation.w;
+    float q1 = current_pose.pose.pose.orientation.x;
+    float q2 = current_pose.pose.pose.orientation.y;
+    float q3 = current_pose.pose.pose.orientation.z;
+    float psi = atan2((2*(q0*q3 + q1*q2)), (1 - 2*(pow(q2,2) + pow(q3,2))) ); // yaw
+
+    GYM_OFFSET += psi*(180/M_PI);
     // ROS_INFO("current heading%d: %f", i, GYM_OFFSET/i);
   }
   GYM_OFFSET /= 30;
+  GYM_OFFSET += 90;
   ROS_INFO("the N' axis is facing: %f", GYM_OFFSET);
   cout << GYM_OFFSET << "\n" << endl;
   std_msgs::Float64 gymOffset;
   gymOffset.data = GYM_OFFSET;
   gym_offset_pub.publish(gymOffset);
+
   // arming
   mavros_msgs::CommandBool arm_request;
   arm_request.request.value = true;
