@@ -1,10 +1,10 @@
 safety_limits:
   xlim:
-    min: -10.0
-    max: 10.0
+    min: -20.5
+    max: 19.5
   ylim:
-    min: -10.0
-    max: 10.0
+    min: -20.5
+    max: 19.5
   zlim:
     min: 0.0
     max: 3.0
