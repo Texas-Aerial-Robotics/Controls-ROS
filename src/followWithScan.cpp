@@ -307,6 +307,17 @@ int main(int argc, char** argv)
       }
       else if(MODE.data == "TAKEOFF")
       {
+        //set flight mode to guided
+        ros::ServiceClient set_mode_client = controlnode.serviceClient<mavros_msgs::SetMode>("/mavros/set_mode");
+        mavros_msgs::SetMode srv_setMode;
+        srv_setMode.request.base_mode = 0;
+        srv_setMode.request.custom_mode = "GUIDED";
+        if(set_mode_client.call(srv_setMode)){
+          ROS_INFO("setmode send ok");
+        }else{
+          ROS_ERROR("Failed SetMode");
+          return -1;
+        }
         mavros_msgs::CommandTOL takeoff_request;
         takeoff_request.request.altitude = 1.5;
 
