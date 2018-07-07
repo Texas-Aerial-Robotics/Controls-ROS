@@ -34,6 +34,7 @@ float y_max;
 float z_min;
 float z_max;
 double RUN_START_TIME = 0;
+bool currentlyAvoiding = false;
 
 //get armed state
 void state_cb(const mavros_msgs::State::ConstPtr& msg)
@@ -114,16 +115,23 @@ void waypoint_update(const geometry_msgs::PoseStamped::ConstPtr& msg)
   float way_y = waypoint_eval.pose.position.y;
   float way_z = waypoint_eval.pose.position.z;
 
-  if (way_z < z_max && way_z > z_min && way_x < x_max && way_x > x_min && way_y < y_max && way_y > y_min)
+  if (!currentlyAvoiding)
   {
-        waypoint.pose.position.x = way_x;
-        waypoint.pose.position.y = way_y;
-        waypoint.pose.position.z = way_z;
-        setDestination(way_x,way_y,way_z);
+    if (way_z < z_max && way_z > z_min && way_x < x_max && way_x > x_min && way_y < y_max && way_y > y_min)
+    {
+          waypoint.pose.position.x = way_x;
+          waypoint.pose.position.y = way_y;
+          waypoint.pose.position.z = way_z;
+          setDestination(way_x,way_y,way_z);
+    }
+    else
+    {
+      ROS_INFO("The waypoint passed is out of bounds at x,y,z = %f,%f,%f",way_x,way_y,way_z);
+    }
   }
   else
   {
-    ROS_INFO("The waypoint passed is out of bounds at x,y,z = %f,%f,%f",way_x,way_y,way_z);
+    ROS_INFO("Waypoint ignored. Obs avoidance in progress...");
   }
 }
 
@@ -224,13 +232,14 @@ int main(int argc, char** argv)
   setHeading(0);
   float tollorance = .35;
   float scanMinRange = .45;
-  float scanMaxRange = 1.25;
+  float scanMaxRange = 1.75;
   while(ros::ok())
   {
     ros::spinOnce();
 
     rate.sleep();
 
+    ROS_INFO("Avoidance: %d", currentlyAvoiding);
     int scanRayIndex = 2;
 	  while(((scanRayIndex+2) < 1024)) {
   	  scanRayIndex++;
@@ -248,6 +257,10 @@ int main(int argc, char** argv)
       if(current_2D_scan.ranges[scanRayIndex] < scanMaxRange && current_2D_scan.ranges[scanRayIndex] > scanMinRange)
       {
         	ROS_INFO("Index[%d]: %f", scanRayIndex, current_2D_scan.ranges[scanRayIndex]);
+      }
+      if ((scanRayIndex+3) == 1024) // scanRayIndex+2 because checking multiple rays and +1 because less than in while loop
+      {
+        currentlyAvoiding = false;
       }
 	  }
 	  if (scanRayIndex < 1023 && scanRayIndex > 0 && current_2D_scan.ranges[scanRayIndex] < scanMaxRange && current_2D_scan.ranges[scanRayIndex] > scanMinRange)
@@ -270,18 +283,14 @@ int main(int argc, char** argv)
   		ROS_INFO("radius: %f, ex: %f, why: %f", radius, ex, why);
 
   		setDestination((X + (ex/radius)*(-1.328)), (Y + (why/radius)*(-1.328)), Z);
+      currentlyAvoiding = true;
+
       rate.sleep();
       rate.sleep();
       rate.sleep();
     }
 
-    float deltaX = abs(waypoint.pose.position.x - current_pose.pose.pose.position.x);
-    float deltaY = abs(waypoint.pose.position.y - current_pose.pose.pose.position.y);
-    float deltaZ = abs(waypoint.pose.position.z - current_pose.pose.pose.position.z);
-    // cout << " dx " << deltaX << " dy " << deltaY << " dz " << deltaZ << endl;
-    float dMag = sqrt( pow(deltaX, 2) + pow(deltaY, 2) + pow(deltaZ, 2) );
-    // cout << dMag << endl;
-    if( dMag < tollorance )
+    if (!currentlyAvoiding)
     {
       if(MODE.data == "LAND")
       {
