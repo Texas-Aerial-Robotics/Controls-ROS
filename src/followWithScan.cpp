@@ -283,26 +283,32 @@ int main(int argc, char** argv)
       // cout << dMag << endl;
       if( dMag < tollorance )
       {
-        if(MODE.data == "GOTO")
+        if(MODE.data == "LAND")
         {
-            ros::ServiceClient land_client = controlnode.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/land");
-            mavros_msgs::CommandTOL srv_land;
-            if (land_client.call(srv_land) && srv_land.response.success)
-              ROS_INFO("land sent %d", srv_land.response.success);
-            else
-            {
-              ROS_ERROR("Landing failed");
-              ros::shutdown();
-              return -1;
-            }
-
-            while (ros::ok())
-            {
-              ros::spinOnce();
-              rate.sleep();
-            }
+          ros::ServiceClient land_client = controlnode.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/land");
+          mavros_msgs::CommandTOL srv_land;
+          if (land_client.call(srv_land) && srv_land.response.success)
+            ROS_INFO("land sent %d", srv_land.response.success);
+          else
+          {
+            ROS_ERROR("Landing failed");
+            ros::shutdown();
+            return -1;
+          }
         }
-        continue;
+        if(MODE.data == "TAKEOFF")
+        {
+          mavros_msgs::CommandTOL takeoff_request;
+          takeoff_request.request.altitude = 1.5;
+
+          while (!takeoff_request.response.success)
+          {
+            ros::Duration(.1).sleep();
+            takeoff_client.call(takeoff_request);
+          }
+          ROS_INFO("Takeoff sent");
+
+        }
       }else{
         local_pos_pub.publish(waypoint);
       }
