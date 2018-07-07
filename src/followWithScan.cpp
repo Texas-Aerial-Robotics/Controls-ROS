@@ -46,6 +46,7 @@ void pose_cb(const nav_msgs::Odometry::ConstPtr& msg)
 	current_pose = *msg;
 	// ROS_INFO("x: %f y: %f z: %f", current_pose.pose.pose.position.x, current_pose.pose.pose.position.y, current_pose.pose.pose.position.z);
 }
+
 //get compass heading
 void heading_cb(const std_msgs::Float64::ConstPtr& msg)
 {
@@ -86,6 +87,12 @@ void setHeading(float heading)
   waypoint.pose.orientation.y = qy;
   waypoint.pose.orientation.z = qz;
 
+}
+void setHeading_cb(const std_msgs::Float64::ConstPtr& msg)
+{
+  std_msgs::Float64 set_heading = *msg;
+  setHeading(set_heading.data);
+  // ROS_INFO("current heading: %f", current_heading.data);
 }
 // set position to fly to in the gym frame
 void setDestination(float x, float y, float z)
@@ -157,6 +164,7 @@ int main(int argc, char** argv)
   ros::Subscriber collision_sub = controlnode.subscribe<sensor_msgs::LaserScan>("spur/laser/scan", 1, scan_cb);
   ros::ServiceClient arming_client = controlnode.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
   ros::ServiceClient takeoff_client = controlnode.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/takeoff");
+  ros::Subscriber heading_pub = controlnode.subscribe<std_msgs::Float64>("setHeading", 1, setHeading_cb);
 
 
   // wait for FCU connection
@@ -266,39 +274,29 @@ int main(int argc, char** argv)
       rate.sleep();
 	  }
 
-      float deltaX = abs(waypoint.pose.position.x - current_pose.pose.pose.position.x);
-      float deltaY = abs(waypoint.pose.position.y - current_pose.pose.pose.position.y);
-      float deltaZ = abs(waypoint.pose.position.z - current_pose.pose.pose.position.z);
-      // cout << " dx " << deltaX << " dy " << deltaY << " dz " << deltaZ << endl;
-      float dMag = sqrt( pow(deltaX, 2) + pow(deltaY, 2) + pow(deltaZ, 2) );
-      // cout << dMag << endl;
-      if( dMag < tollorance )
+      if(MODE.data == "GOTO")
       {
-        if(MODE.data == "GOTO")
-        {
-            ros::ServiceClient land_client = controlnode.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/land");
-            mavros_msgs::CommandTOL srv_land;
-            if (land_client.call(srv_land) && srv_land.response.success)
-              ROS_INFO("land sent %d", srv_land.response.success);
-            else
-            {
-              ROS_ERROR("Landing failed");
-              ros::shutdown();
-              return -1;
-            }
+          ros::ServiceClient land_client = controlnode.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/land");
+          mavros_msgs::CommandTOL srv_land;
+          if (land_client.call(srv_land) && srv_land.response.success)
+            ROS_INFO("land sent %d", srv_land.response.success);
+          else
+          {
+            ROS_ERROR("Landing failed");
+            ros::shutdown();
+            return -1;
+          }
 
-            while (ros::ok())
-            {
-              ros::spinOnce();
-              rate.sleep();
-            }
-        }
-        continue;
-      }else{
-        local_pos_pub.publish(waypoint);
+          while (ros::ok())
+          {
+            ros::spinOnce();
+            rate.sleep();
+          }
       }
 
-      //gym_offset_pub.publish(GYM_OFFSET);
+    //gym_offset_pub.publish(GYM_OFFSET);
+    local_pos_pub.publish(waypoint);
+    gym_offset_pub.publish(gymOffset);
   }
   return 0;
 }
