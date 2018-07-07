@@ -275,31 +275,39 @@ int main(int argc, char** argv)
       rate.sleep();
     }
 
-
-    if(MODE.data == "LAND")
+    float deltaX = abs(waypoint.pose.position.x - current_pose.pose.pose.position.x);
+    float deltaY = abs(waypoint.pose.position.y - current_pose.pose.pose.position.y);
+    float deltaZ = abs(waypoint.pose.position.z - current_pose.pose.pose.position.z);
+    // cout << " dx " << deltaX << " dy " << deltaY << " dz " << deltaZ << endl;
+    float dMag = sqrt( pow(deltaX, 2) + pow(deltaY, 2) + pow(deltaZ, 2) );
+    // cout << dMag << endl;
+    if( dMag < tollorance )
     {
-      ros::ServiceClient land_client = controlnode.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/land");
-      mavros_msgs::CommandTOL srv_land;
-      if (land_client.call(srv_land) && srv_land.response.success)
-        ROS_INFO("land sent %d", srv_land.response.success);
-      else
+      if(MODE.data == "LAND")
       {
-        ROS_ERROR("Landing failed");
-        ros::shutdown();
-        return -1;
+        ros::ServiceClient land_client = controlnode.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/land");
+        mavros_msgs::CommandTOL srv_land;
+        if (land_client.call(srv_land) && srv_land.response.success)
+          ROS_INFO("land sent %d", srv_land.response.success);
+        else
+        {
+          ROS_ERROR("Landing failed");
+          ros::shutdown();
+          return -1;
+        }
       }
-    }
-    else if(MODE.data == "TAKEOFF")
-    {
-      mavros_msgs::CommandTOL takeoff_request;
-      takeoff_request.request.altitude = 1.5;
+      else if(MODE.data == "TAKEOFF")
+      {
+        mavros_msgs::CommandTOL takeoff_request;
+        takeoff_request.request.altitude = 1.5;
 
-      while (!takeoff_request.response.success)
-      {
-        ros::Duration(.1).sleep();
-        takeoff_client.call(takeoff_request);
+        while (!takeoff_request.response.success)
+        {
+          ros::Duration(.1).sleep();
+          takeoff_client.call(takeoff_request);
+        }
+        ROS_INFO("Takeoff sent");
       }
-      ROS_INFO("Takeoff sent");
     }
 
 
