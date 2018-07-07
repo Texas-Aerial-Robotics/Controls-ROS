@@ -82,6 +82,12 @@ void setHeading(float heading)
   waypoint.pose.orientation.z = qz;
 
 }
+void setHeading_cb(const std_msgs::Float64::ConstPtr& msg)
+{
+  std_msgs::Float64 set_heading = *msg;
+  setHeading(set_heading.data);
+  // ROS_INFO("current heading: %f", current_heading.data);
+}
 // set position to fly to in the gym frame
 void setDestination(float x, float y, float z)
 {
@@ -159,7 +165,7 @@ int main(int argc, char** argv)
   ros::Subscriber collision_sub = controlnode.subscribe<sensor_msgs::LaserScan>("spur/laser/scan", 1, scan_cb);
   ros::ServiceClient arming_client = controlnode.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
   ros::ServiceClient takeoff_client = controlnode.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/takeoff");
-
+  ros::Subscriber heading_pub = controlnode.subscribe<std_msgs::Float64>("setHeading", 1, setHeading_cb);
 
   // wait for FCU connection
   while (ros::ok() && !current_state.connected)
@@ -239,7 +245,6 @@ int main(int argc, char** argv)
 
     rate.sleep();
 
-    ROS_INFO("Avoidance: %d", currentlyAvoiding);
     int scanRayIndex = 2;
 	  while(((scanRayIndex+2) < 1024)) {
   	  scanRayIndex++;
@@ -307,17 +312,40 @@ int main(int argc, char** argv)
       }
       else if(MODE.data == "TAKEOFF")
       {
-        //set flight mode to guided
-        ros::ServiceClient set_mode_client = controlnode.serviceClient<mavros_msgs::SetMode>("/mavros/set_mode");
-        mavros_msgs::SetMode srv_setMode;
-        srv_setMode.request.base_mode = 0;
-        srv_setMode.request.custom_mode = "GUIDED";
-        if(set_mode_client.call(srv_setMode)){
-          ROS_INFO("setmode send ok");
-        }else{
-          ROS_ERROR("Failed SetMode");
-          return -1;
+        while (current_state.armed)
+        {
+          rate.sleep();
+          ros::spinOnce();
         }
+        sleep(8);
+
+        while (current_state.mode != "GUIDED")
+        {
+          //set flight mode to guided
+          ros::ServiceClient set_mode_client = controlnode.serviceClient<mavros_msgs::SetMode>("/mavros/set_mode");
+          mavros_msgs::SetMode srv_setMode;
+          srv_setMode.request.base_mode = 0;
+          srv_setMode.request.custom_mode = "GUIDED";
+          if(set_mode_client.call(srv_setMode)){
+            ROS_INFO("setmode send ok");
+          }else{
+            ROS_ERROR("Failed SetMode");
+            return -1;
+          }
+          ros::Duration(.5).sleep();
+          ros::spinOnce();
+        }
+        // arming
+        mavros_msgs::CommandBool arm_request;
+        arm_request.request.value = true;
+        float armTime = ros::Time::now().toSec();
+        while (!current_state.armed)
+        {
+          ros::Duration(.1).sleep();
+          arming_client.call(arm_request);
+          ros::spinOnce();
+        }
+        ROS_INFO("ARM sent %d", arm_request.response.success);
         mavros_msgs::CommandTOL takeoff_request;
         takeoff_request.request.altitude = 1.5;
 
@@ -325,8 +353,10 @@ int main(int argc, char** argv)
         {
           ros::Duration(.1).sleep();
           takeoff_client.call(takeoff_request);
+          ros::spinOnce();
         }
         ROS_INFO("Takeoff sent");
+        sleep(5);
       }
     }
 
