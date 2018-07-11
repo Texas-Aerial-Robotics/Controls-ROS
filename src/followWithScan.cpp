@@ -33,6 +33,7 @@ float y_min;
 float y_max;
 float z_min;
 float z_max;
+float current_heading;
 double RUN_START_TIME = 0;
 bool currentlyAvoiding = false;
 
@@ -45,6 +46,13 @@ void state_cb(const mavros_msgs::State::ConstPtr& msg)
 void pose_cb(const nav_msgs::Odometry::ConstPtr& msg)
 {
   current_pose = *msg;
+  float q0 = current_pose.pose.pose.orientation.w;
+  float q1 = current_pose.pose.pose.orientation.x;
+  float q2 = current_pose.pose.pose.orientation.y;
+  float q3 = current_pose.pose.pose.orientation.z;
+  float psi = atan2((2*(q0*q3 + q1*q2)), (1 - 2*(pow(q2,2) + pow(q3,2))) );
+  current_heading = psi*(180/M_PI) + 90;
+  cout << current_heading << endl;
   // ROS_INFO("x: %f y: %f z: %f", current_pose.pose.pose.position.x, current_pose.pose.pose.position.y, current_pose.pose.pose.position.z);
 }
 void mode_cb(const std_msgs::String::ConstPtr& msg)
@@ -293,7 +301,17 @@ int main(int argc, char** argv)
 
       ROS_INFO("radius: %f, ex: %f, why: %f", radius, ex, why);
 
-      setDestination((X + (ex/radius)*(-1.328)), (Y + (why/radius)*(-1.328)), Z);
+      //avoidance vector relative to the drone
+      float avoidXdrone = (ex/radius)*(-1.328);
+      float avoidYdrone = (why/radius)*(-1.328);
+
+      //Transform to gym refernce frame
+
+      float avoidXgym = avoidXdrone*cos(-(current_heading-GYM_OFFSET )*deg2rad) - avoidYdrone*sin(-(current_heading-GYM_OFFSET)*deg2rad);
+      float avoidYgym = avoidXdrone*sin(-(current_heading-GYM_OFFSET )*deg2rad) + avoidYdrone*cos(-(current_heading-GYM_OFFSET)*deg2rad);
+
+      ROS_INFO("goto x: %f, y: %f", avoidXgym, avoidYgym);
+      setDestination((X + avoidXgym), (Y + avoidYgym), Z);
       currentlyAvoiding = true;
 
       rate.sleep();
@@ -301,64 +319,61 @@ int main(int argc, char** argv)
       rate.sleep();
     }
 
-    if(!currentlyAvoiding)
+    if(MODE.data == "LAND" && !currentlyAvoiding)
     {
-      if(MODE.data == "LAND")
+      mavros_msgs::CommandTOL srv_land;
+      if(land_client.call(srv_land) && srv_land.response.success)
+        ROS_INFO("land sent %d", srv_land.response.success);
+      else
       {
-        mavros_msgs::CommandTOL srv_land;
-        if(land_client.call(srv_land) && srv_land.response.success)
-          ROS_INFO("land sent %d", srv_land.response.success);
-        else
-        {
-          ROS_ERROR("Landing failed");
-        }
+        ROS_ERROR("Landing failed");
       }
-      else if(MODE.data == "TAKEOFF")
+    }
+    else if(MODE.data == "TAKEOFF")
+    {
+      while (current_state.armed)
       {
-        while (current_state.armed)
-        {
-          rate.sleep();
-          ros::spinOnce();
-        }
-        ros::Duration(8).sleep();
-
-        while (current_state.mode != "GUIDED")
-        {
-          //set flight mode to guided
-          mavros_msgs::SetMode srv_setMode;
-          srv_setMode.request.base_mode = 0;
-          srv_setMode.request.custom_mode = "GUIDED";
-          if(set_mode_client.call(srv_setMode)){
-            ROS_INFO("setmode send ok");
-          }else{
-            ROS_ERROR("Failed SetMode");
-            return -1;
-          }
-          ros::Duration(.5).sleep();
-          ros::spinOnce();
-        }
-        // arming
-        mavros_msgs::CommandBool arm_request;
-        arm_request.request.value = true;
-        while (!current_state.armed)
-        {
-          arming_client.call(arm_request);
-          ros::Duration(.1).sleep();
-          ros::spinOnce();
-        }
-        ROS_INFO("ARM sent %d", arm_request.response.success);
-        mavros_msgs::CommandTOL takeoff_request;
-        takeoff_request.request.altitude = 1.5;
-
-        while (!takeoff_request.response.success)
-        {
-          takeoff_client.call(takeoff_request);
-          ros::Duration(.1).sleep();
-          ros::spinOnce();
-        }
-        ROS_INFO("Takeoff sent");
-        ros::Duration(5).sleep();
+        rate.sleep();
+        ros::spinOnce();
       }
+      ros::Duration(5).sleep();
+
+      while (current_state.mode != "GUIDED")
+      {
+        //set flight mode to guided
+        mavros_msgs::SetMode srv_setMode;
+        srv_setMode.request.base_mode = 0;
+        srv_setMode.request.custom_mode = "GUIDED";
+        if(set_mode_client.call(srv_setMode)){
+          ROS_INFO("setmode send ok");
+        }else{
+          ROS_ERROR("Failed SetMode");
+          return -1;
+        }
+        ros::Duration(.5).sleep();
+        ros::spinOnce();
+      }
+      // arming
+      mavros_msgs::CommandBool arm_request;
+      arm_request.request.value = true;
+      while (!current_state.armed)
+      {
+        arming_client.call(arm_request);
+        ros::Duration(.1).sleep();
+        ros::spinOnce();
+      }
+      ROS_INFO("ARM sent %d", arm_request.response.success);
+      mavros_msgs::CommandTOL takeoff_request;
+      takeoff_request.request.altitude = 1.5;
+
+      while (!takeoff_request.response.success)
+      {
+        takeoff_client.call(takeoff_request);
+        ros::Duration(.1).sleep();
+        ros::spinOnce();
+      }
+      ROS_INFO("Takeoff sent");
+      ros::Duration(5).sleep();
     }
 
     local_pos_pub.publish(waypoint);
