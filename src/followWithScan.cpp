@@ -250,7 +250,7 @@ int main(int argc, char** argv)
   // 2D spinning LIDAR params
   float tollorance = .35;
   float scanMinRange = .45;
-  float scanMaxRange = 1.75;
+  float scanMaxRange = 1.2;
 
   while(ros::ok())
   {
@@ -306,9 +306,8 @@ int main(int argc, char** argv)
       float avoidYdrone = (why/radius)*(-1.328);
 
       //Transform to gym refernce frame
-
-      float avoidXgym = avoidXdrone*cos(-(current_heading-GYM_OFFSET )*deg2rad) - avoidYdrone*sin(-(current_heading-GYM_OFFSET)*deg2rad);
-      float avoidYgym = avoidXdrone*sin(-(current_heading-GYM_OFFSET )*deg2rad) + avoidYdrone*cos(-(current_heading-GYM_OFFSET)*deg2rad);
+      float avoidXgym = avoidXdrone*cos(-(current_heading-GYM_OFFSET)*deg2rad) - avoidYdrone*sin(-(current_heading-GYM_OFFSET)*deg2rad);
+      float avoidYgym = avoidXdrone*sin(-(current_heading-GYM_OFFSET)*deg2rad) + avoidYdrone*cos(-(current_heading-GYM_OFFSET)*deg2rad);
 
       ROS_INFO("goto x: %f, y: %f", avoidXgym, avoidYgym);
       setDestination((X + avoidXgym), (Y + avoidYgym), Z);
