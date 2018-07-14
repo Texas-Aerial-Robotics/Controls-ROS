@@ -13,7 +13,7 @@ int main(int argc, char** argv)
   ros::NodeHandle setDestinationNode;
 
   ros::Rate rate(5.0);
-  ros::Publisher chatter_pub = setDestinationNode.advertise<geometry_msgs::PoseStamped>("waypoint", 1);
+  ros::Publisher chatter_pub = setDestinationNode.advertise<geometry_msgs::PoseStamped>("TARwaypoint", 1);
 
   printf("desired x: ");
   fflush( stdout );

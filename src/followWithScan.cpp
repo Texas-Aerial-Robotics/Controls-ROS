@@ -169,7 +169,7 @@ int main(int argc, char** argv)
   ros::Subscriber heading_pub = controlnode.subscribe<std_msgs::Float64>("setHeading", 1, setHeading_cb);
   ros::Subscriber mode_sub = controlnode.subscribe<std_msgs::String>("mode", 10, mode_cb);
   ros::Subscriber state_sub = controlnode.subscribe<mavros_msgs::State>("mavros/state", 10, state_cb);
-  ros::Subscriber waypointSubscrib = controlnode.subscribe<geometry_msgs::PoseStamped>("waypoint", 10, waypoint_update);
+  ros::Subscriber waypointSubscrib = controlnode.subscribe<geometry_msgs::PoseStamped>("TARwaypoint", 10, waypoint_update);
   ros::ServiceClient arming_client = controlnode.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
   ros::ServiceClient land_client = controlnode.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/land");
   ros::ServiceClient set_mode_client = controlnode.serviceClient<mavros_msgs::SetMode>("/mavros/set_mode");
