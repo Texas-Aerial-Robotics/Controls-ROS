@@ -36,6 +36,7 @@ float z_max;
 float current_heading;
 double RUN_START_TIME = 0;
 bool currentlyAvoiding = false;
+bool lidarPresent = false;
 
 //get armed state
 void state_cb(const mavros_msgs::State::ConstPtr& msg)
@@ -259,7 +260,7 @@ int main(int argc, char** argv)
 
     // 2D LIDAR obstacle avoidance
     int scanRayIndex = 2;
-    while(((scanRayIndex+2) < 1024)) {
+    while(lidarPresent && ((scanRayIndex+2) < 1024)) {
       scanRayIndex++;
       ros::spinOnce();
 
@@ -282,7 +283,7 @@ int main(int argc, char** argv)
         currentlyAvoiding = false;
       }
     }
-    if(scanRayIndex < 1023 && scanRayIndex > 0 && current_2D_scan.ranges[scanRayIndex] < scanMaxRange && current_2D_scan.ranges[scanRayIndex] > scanMinRange)
+    if(lidarPresent && (scanRayIndex < 1023 && scanRayIndex > 0 && current_2D_scan.ranges[scanRayIndex] < scanMaxRange && current_2D_scan.ranges[scanRayIndex] > scanMinRange))
     {
       double angle_of_obstacle_RAD = current_2D_scan.angle_increment*scanRayIndex;
       ROS_INFO("Obstacle sighted @%f (current_2D_scan.angle_increment: %f * scanRayIndex: %d)", angle_of_obstacle_RAD, current_2D_scan.angle_increment, scanRayIndex);
