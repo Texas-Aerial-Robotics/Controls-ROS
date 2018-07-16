@@ -52,14 +52,14 @@ void pose_cb(const nav_msgs::Odometry::ConstPtr& msg)
   float q2 = current_pose.pose.pose.orientation.y;
   float q3 = current_pose.pose.pose.orientation.z;
   float psi = atan2((2*(q0*q3 + q1*q2)), (1 - 2*(pow(q2,2) + pow(q3,2))) );
-  current_heading = psi*(180/M_PI) + 90;
-  cout << current_heading << endl;
+  current_heading = -psi*(180/M_PI) + 90;
+  ROS_INFO("Current Heading %f ", current_heading);
   // ROS_INFO("x: %f y: %f z: %f", current_pose.pose.pose.position.x, current_pose.pose.pose.position.y, current_pose.pose.pose.position.z);
 }
 void mode_cb(const std_msgs::String::ConstPtr& msg)
 {
   MODE = *msg;
-  ROS_INFO("current mode: %s", MODE.data.c_str());
+  //ROS_INFO("current mode: %s", MODE.data.c_str());
 }
 void scan_cb(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
@@ -214,7 +214,7 @@ int main(int argc, char** argv)
     GYM_OFFSET += psi*(180/M_PI);
     // ROS_INFO("current heading%d: %f", i, GYM_OFFSET/i);
   }
-  GYM_OFFSET /= 30;
+  GYM_OFFSET /= -30;
   GYM_OFFSET += 90;
   ROS_INFO("the N' axis is facing: %f", GYM_OFFSET);
   cout << GYM_OFFSET << "\n" << endl;
