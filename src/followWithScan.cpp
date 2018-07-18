@@ -106,7 +106,8 @@ void setDestination(float x, float y, float z)
   waypoint.pose.position.x = X;
   waypoint.pose.position.y = Y;
   waypoint.pose.position.z = Z;
-  ROS_INFO("Destination set to x: %f y: %f z: %f", X, Y, Z);
+  // ROS_INFO("Destination set to x: %f y: %f z: %f", X, Y, Z);
+  cout << "Destination set to x: " << X << " y: " << Y << " z: " << Z << endl;
 }
 
 //initialize ROS
