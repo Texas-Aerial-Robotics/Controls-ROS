@@ -261,7 +261,8 @@ int main(int argc, char** argv)
 
     // 2D LIDAR obstacle avoidance
     int scanRayIndex = 2;
-    while(lidarPresent && ((scanRayIndex+2) < current_2D_scan.ranges.size())) {
+    int scanSize = current_2D_scan.ranges.size();
+    while(lidarPresent && ((scanRayIndex+2) < scanSize)) {
       scanRayIndex++;
       ros::spinOnce();
 
@@ -279,12 +280,12 @@ int main(int argc, char** argv)
       {
         ROS_INFO("Index[%d]: %f", scanRayIndex, current_2D_scan.ranges[scanRayIndex]);
       }
-      if(!lidarPresent || (scanRayIndex+3) == current_2D_scan.ranges.size()) // scanRayIndex+2 because checking multiple rays and +1 because less than in while loop
+      if(!lidarPresent || (scanRayIndex+3) == scanSize) // scanRayIndex+2 because checking multiple rays and +1 because less than in while loop
       {
         currentlyAvoiding = false;
       }
     }
-    if(lidarPresent && (scanRayIndex < current_2D_scan.ranges.size() && scanRayIndex > 0 && current_2D_scan.ranges[scanRayIndex] < scanMaxRange && current_2D_scan.ranges[scanRayIndex] > scanMinRange))
+    if(lidarPresent && (scanRayIndex < scanSize && scanRayIndex > 0 && current_2D_scan.ranges[scanRayIndex] < scanMaxRange && current_2D_scan.ranges[scanRayIndex] > scanMinRange))
     {
       double angle_of_obstacle_RAD = current_2D_scan.angle_increment*scanRayIndex;
       ROS_INFO("Obstacle sighted @%f (current_2D_scan.angle_increment: %f * scanRayIndex: %d)", angle_of_obstacle_RAD, current_2D_scan.angle_increment, scanRayIndex);
@@ -320,7 +321,9 @@ int main(int argc, char** argv)
       rate.sleep();
     }
 
-    if(MODE.data == "LAND" && !currentlyAvoiding)
+
+    // LAND if StratNode says to or ten min run is done (600 sec == ten min)
+    if((MODE.data == "LAND" || ((ros::Time::now().toSec()-RUN_START_TIME) < 590)) && !currentlyAvoiding)
     {
       mavros_msgs::CommandTOL srv_land;
       if(land_client.call(srv_land) && srv_land.response.success)
@@ -332,14 +335,14 @@ int main(int argc, char** argv)
     }
     else if(MODE.data == "TAKEOFF")
     {
-      while (current_state.armed)
+      while (current_state.armed && current_state.mode == "LAND")
       {
         rate.sleep();
         ros::spinOnce();
       }
       ros::Duration(5).sleep();
 
-      while (current_state.mode != "GUIDED")
+      while (current_state.mode == "LAND")
       {
         //set flight mode to guided
         mavros_msgs::SetMode srv_setMode;
@@ -357,7 +360,7 @@ int main(int argc, char** argv)
       // arming
       mavros_msgs::CommandBool arm_request;
       arm_request.request.value = true;
-      while (!current_state.armed)
+      while (!current_state.armed && current_state.mode == "GUIDED")
       {
         arming_client.call(arm_request);
         ros::Duration(.1).sleep();
@@ -367,7 +370,7 @@ int main(int argc, char** argv)
       mavros_msgs::CommandTOL takeoff_request;
       takeoff_request.request.altitude = 1.5;
 
-      while (!takeoff_request.response.success)
+      while (!takeoff_request.response.success && current_state.mode == "GUIDED")
       {
         takeoff_client.call(takeoff_request);
         ros::Duration(.1).sleep();
