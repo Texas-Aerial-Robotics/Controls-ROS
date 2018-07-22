@@ -36,7 +36,7 @@ float z_max;
 float current_heading;
 double RUN_START_TIME = 0;
 bool currentlyAvoiding = false;
-bool lidarPresent = false;
+bool lidarPresent = true;
 
 //get armed state
 void state_cb(const mavros_msgs::State::ConstPtr& msg)
@@ -166,7 +166,7 @@ int main(int argc, char** argv)
   ros::Publisher gym_offset_pub = controlnode.advertise<std_msgs::Float64>("gymOffset", 1);
   ros::Publisher local_pos_pub = controlnode.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10);
   ros::Publisher run_start_pub = controlnode.advertise<std_msgs::Float64>("runStartTime", 1);
-  ros::Subscriber collision_sub = controlnode.subscribe<sensor_msgs::LaserScan>("spur/laser/scan", 1, scan_cb);
+  ros::Subscriber collision_sub = controlnode.subscribe<sensor_msgs::LaserScan>("/scan", 1, scan_cb);
   ros::Subscriber currentPos = controlnode.subscribe<nav_msgs::Odometry>("mavros/global_position/local", 10, pose_cb);
   ros::Subscriber heading_pub = controlnode.subscribe<std_msgs::Float64>("setHeading", 1, setHeading_cb);
   ros::Subscriber mode_sub = controlnode.subscribe<std_msgs::String>("mode", 10, mode_cb);
@@ -261,7 +261,7 @@ int main(int argc, char** argv)
 
     // 2D LIDAR obstacle avoidance
     int scanRayIndex = 2;
-    while(lidarPresent && ((scanRayIndex+2) < 1024)) {
+    while(lidarPresent && ((scanRayIndex+2) < current_2D_scan.ranges.size())) {
       scanRayIndex++;
       ros::spinOnce();
 
@@ -279,12 +279,12 @@ int main(int argc, char** argv)
       {
         ROS_INFO("Index[%d]: %f", scanRayIndex, current_2D_scan.ranges[scanRayIndex]);
       }
-      if((scanRayIndex+3) == 1024) // scanRayIndex+2 because checking multiple rays and +1 because less than in while loop
+      if(!lidarPresent || (scanRayIndex+3) == current_2D_scan.ranges.size()) // scanRayIndex+2 because checking multiple rays and +1 because less than in while loop
       {
         currentlyAvoiding = false;
       }
     }
-    if(lidarPresent && (scanRayIndex < 1023 && scanRayIndex > 0 && current_2D_scan.ranges[scanRayIndex] < scanMaxRange && current_2D_scan.ranges[scanRayIndex] > scanMinRange))
+    if(lidarPresent && (scanRayIndex < current_2D_scan.ranges.size() && scanRayIndex > 0 && current_2D_scan.ranges[scanRayIndex] < scanMaxRange && current_2D_scan.ranges[scanRayIndex] > scanMinRange))
     {
       double angle_of_obstacle_RAD = current_2D_scan.angle_increment*scanRayIndex;
       ROS_INFO("Obstacle sighted @%f (current_2D_scan.angle_increment: %f * scanRayIndex: %d)", angle_of_obstacle_RAD, current_2D_scan.angle_increment, scanRayIndex);
