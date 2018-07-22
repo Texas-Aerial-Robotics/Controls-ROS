@@ -21,6 +21,10 @@ int main(int argc, char** argv)
   fflush( stdout );
   cin >> newHeading.data;
 
-  heading_pub.publish(newHeading);
+  for (int i = 0; i < 20; ++i)
+  {
+    heading_pub.publish(newHeading);
+    ros::Duration(0.01).sleep();
+  }
   return 0;
 }

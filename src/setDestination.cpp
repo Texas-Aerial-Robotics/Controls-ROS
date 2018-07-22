@@ -25,6 +25,10 @@ int main(int argc, char** argv)
   fflush( stdout );
   cin >> waypoint.pose.position.z;
 
-  chatter_pub.publish(waypoint);
+  for (int i = 0; i < 20; ++i)
+  {
+    chatter_pub.publish(waypoint);
+    ros::Duration(0.01).sleep();
+  }
   return 0;
 }
