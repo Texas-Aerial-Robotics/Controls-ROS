@@ -189,9 +189,8 @@ int main(int argc, char** argv)
   {
     ros::spinOnce();
     rate.sleep();
-
-    RUN_START_TIME = ros::Time::now().toSec();
   }
+  RUN_START_TIME = ros::Time::now().toSec();
 
   // Publish mission start time
   std_msgs::Float64 runStartTime;
@@ -323,7 +322,7 @@ int main(int argc, char** argv)
 
 
     // LAND if StratNode says to or ten min run is done (600 sec == ten min)
-    if((MODE.data == "LAND" || ((ros::Time::now().toSec()-RUN_START_TIME) < 590)) && !currentlyAvoiding)
+    if((MODE.data == "LAND" || ((ros::Time::now().toSec()-RUN_START_TIME) > 590)) && !currentlyAvoiding)
     {
       mavros_msgs::CommandTOL srv_land;
       if(land_client.call(srv_land) && srv_land.response.success)
