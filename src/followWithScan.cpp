@@ -251,7 +251,7 @@ int main(int argc, char** argv)
   // 2D spinning LIDAR params
   float tollorance = .35;
   float scanMinRange = .45;
-  float scanMaxRange = 1.2;
+  float scanMaxRange = 1.75;
 
   while(ros::ok())
   {
