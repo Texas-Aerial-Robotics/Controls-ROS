@@ -69,7 +69,6 @@ find_package(catkin REQUIRED COMPONENTS
 generate_messages(
    DEPENDENCIES
    std_msgs  # Or other packages containing msgs
- 
 )
 
 ################################################
@@ -134,29 +133,8 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable( landTest src/offb.cpp)
-target_link_libraries( landTest ${catkin_LIBRARIES})
-
-add_executable( landTest2 src/switch.cpp)
-target_link_libraries( landTest2 ${catkin_LIBRARIES})
-
-add_executable( fuck src/idk.cpp)
-target_link_libraries(fuck ${catkin_LIBRARIES})
-
-add_executable(takeoffTest src/takeoff.cpp)
-target_link_libraries(takeoffTest ${catkin_LIBRARIES})
-
-add_executable(takeoffLog src/takeoff_with_logging.cpp)
-target_link_libraries(takeoffLog ${catkin_LIBRARIES})
-
-add_executable(loggingCV src/logging.cpp)
-target_link_libraries(loggingCV ${catkin_LIBRARIES})
-
 add_executable(days_before_logs src/more_logging.cpp)
 target_link_libraries(days_before_logs ${catkin_LIBRARIES})
-
-add_executable(nedTest src/nedTest.cpp)
-target_link_libraries(nedTest ${catkin_LIBRARIES})
 
 add_executable(velTest src/velTest.cpp)
 target_link_libraries(velTest ${catkin_LIBRARIES})
@@ -167,17 +145,23 @@ target_link_libraries(pidWaypoint ${catkin_LIBRARIES})
 add_executable(staple src/staple.cpp)
 target_link_libraries(staple ${catkin_LIBRARIES})
 
-add_executable(hover src/hover.cpp)
-target_link_libraries(hover ${catkin_LIBRARIES})
-
 add_executable(RoombaFollow src/follow.cpp)
 target_link_libraries(RoombaFollow ${catkin_LIBRARIES})
+
+add_executable(RoombaFollowScan src/followWithScan.cpp)
+target_link_libraries(RoombaFollowScan ${catkin_LIBRARIES})
 
 #add_executable(darknetSub src/examples/darknetSub.cpp)
 #target_link_libraries(darknetSub ${catkin_LIBRARIES})
 
 add_executable(setHome src/setHome.cpp)
 target_link_libraries(setHome ${catkin_LIBRARIES})
+
+add_executable(setDestination src/setDestination.cpp)
+target_link_libraries(setDestination ${catkin_LIBRARIES})
+
+add_executable(setHeading src/setHeading.cpp)
+target_link_libraries(setHeading ${catkin_LIBRARIES})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

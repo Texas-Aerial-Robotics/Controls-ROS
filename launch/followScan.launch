@@ -1,0 +1,4 @@
+<launch>
+     <rosparam command="load" ns="contols_params" file="$(find flight_pkg)/cfg/contolParams.yaml"/>
+     <node pkg="flight_pkg" type="RoombaFollowScan" name="RoombaFollowScan" output="screen"></node>
+</launch>

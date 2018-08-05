@@ -138,14 +138,14 @@ int main(int argc, char** argv)
   ros::param::get("/contols_params/safety_limits/xlim/min", z_min);
   ros::param::get("/contols_params/safety_limits/xlim/max", z_max);
 
-  ros::Rate rate(600.0);
+  ros::Rate rate(5.0);
   ros::Subscriber state_sub = controlnode.subscribe<mavros_msgs::State>("mavros/state", 10, state_cb);
   ros::Publisher set_vel_pub = controlnode.advertise<mavros_msgs::PositionTarget>("mavros/setpoint_raw/local", 10);
   ros::Publisher local_pos_pub = controlnode.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10);
   ros::Publisher gym_offset_pub = controlnode.advertise<std_msgs::Float64>("gymOffset", 1);
   ros::Subscriber currentPos = controlnode.subscribe<nav_msgs::Odometry>("mavros/global_position/local", 10, pose_cb);
   ros::Subscriber currentHeading = controlnode.subscribe<std_msgs::Float64>("mavros/global_position/compass_hdg", 10, heading_cb);
-  ros::Subscriber waypointSubscrib = controlnode.subscribe<geometry_msgs::PoseStamped>("roombaPose", 10, waypoint_update);
+  ros::Subscriber waypointSubscrib = controlnode.subscribe<geometry_msgs::PoseStamped>("waypoint", 10, waypoint_update);
   ros::Subscriber mode_sub = controlnode.subscribe<std_msgs::String>("mode", 1, mode_cb);
   ros::ServiceClient arming_client = controlnode.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
   ros::ServiceClient takeoff_client = controlnode.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/takeoff");
@@ -168,9 +168,16 @@ int main(int argc, char** argv)
   ROS_INFO("Mode set to GUIDED");
 
   //set the orientation of the gym
-  GYM_OFFSET = current_heading.data;
+  GYM_OFFSET = 0;
+  for (int i = 1; i <= 30; ++i) {
+    ros::spinOnce();
+    ros::Duration(0.1).sleep();
+    GYM_OFFSET += current_heading.data;
+    ROS_INFO("current heading%d: %f", i, GYM_OFFSET/i);
+  }
+  GYM_OFFSET /= 30;
   ROS_INFO("the N' axis is facing: %f", GYM_OFFSET);
-  cout << current_heading << "\n" << endl;
+  cout << GYM_OFFSET << "\n" << endl;
   std_msgs::Float64 gymOffset;
   gymOffset.data = GYM_OFFSET;
   gym_offset_pub.publish(gymOffset);
@@ -187,7 +194,7 @@ int main(int argc, char** argv)
 
   //request takeoff
   mavros_msgs::CommandTOL takeoff_request;
-  takeoff_request.request.altitude = 3;
+  takeoff_request.request.altitude = 1.5;
 
   while (!takeoff_request.response.success)
   {
@@ -196,7 +203,7 @@ int main(int argc, char** argv)
   }
   ROS_INFO("Takeoff initialized");
   sleep(10);
-  setDestination(0,0,2.9);
+  setDestination(0,0,1.5);
   //move foreward
   setHeading(0);
   float tollorance = .35;
