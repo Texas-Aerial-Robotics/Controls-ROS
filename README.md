@@ -4,7 +4,7 @@ In this repository are the files nessary to build our ROS (Robot Operating Syste
 
 We use **Ubuntu 18.04** and **ROS Melodic**
 
-This package is loaded and run on our Nvidia Jetson TX1 onboard the quadcopter.
+This package is loaded and run on our Nvidia Jetson TX2 onboard the quadcopter.
 
 It then feeds commands to the Pixhawk 2 using MAVROS.
 
