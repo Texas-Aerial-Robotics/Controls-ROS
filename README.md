@@ -151,6 +151,7 @@ Get Gazebo plugin for APM (ArduPilot Master):
 cd ~
 git clone https://github.com/SwiftGust/ardupilot_gazebo
 cd ardupilot_gazebo
+git checkout gazebo9
 mkdir build
 cd build
 cmake ..
