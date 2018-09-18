@@ -4,20 +4,25 @@ In this repository are the files nessary to build our ROS (Robot Operating Syste
 
 We use **Ubuntu 18.04** and **ROS Melodic**
 
-This package is loaded and run on our Nvidia Jetson TX2 onboard the quadcopter.
+This package is loaded and runs on our Nvidia Jetson TX2 onboard the quadcopter.
 
 It then feeds commands to the Pixhawk 2 using MAVROS.
 
+Note that there is a **Troubleshooting** section at the bottom of this page.
+
+Code blocks are meant to be typed in Terminal windows. "Control+Alt+T" opens a new Terminal window.
+
 ## 1. Install ROS
+
+   - Do _Desktop Install_
+   - Follow until _Step 1.7_ at the end of the page
 
    First, install **ROS Melodic** using the following instructions: http://wiki.ros.org/melodic/Installation/Ubuntu
 
-   Do _Desktop Install_
-   Make sure to follow all the way through the installation (until _Step 1.7_ at the end of the page)
 
 ## 2. Set Up Catkin workspace
 
-We use catkin build instead of catkin_make. Please install the following:
+We use `catkin build` instead of `catkin_make`. Please install the following:
 ```
 sudo apt-get install python-wstool python-rosinstall-generator python-catkin-tools
 ```
@@ -45,8 +50,7 @@ rosdep install --from-paths src --ignore-src --rosdistro `echo $ROS_DISTRO` -y
 catkin build
 ```
 
-add the following to your bashrc
-
+Open your `~/.bashrc` for editing:
 ```
 gedit ~/.bashrc
 ```
@@ -55,12 +59,10 @@ Add this line to end of `~/.bashrc`:
 ```
 source ~/catkin_ws/devel/setup.bash
 ```
-save and exit. then run
-
-`source ~/.bashrc`
-
-
-
+Save and exit. Then run:
+```
+source ~/.bashrc
+```
 
 ## 4. Clone our ROS package repository
 
@@ -68,10 +70,10 @@ save and exit. then run
 cd ~/catkin_ws/src
 git clone https://github.com/Texas-Aerial-Robotics/Controls-ROS.git
 ```
-Our repository should now be copied to `~/catkin_ws/src/Controls-ROS/`
+Our repository should now be copied to `~/catkin_ws/src/Controls-ROS/` (don't run this line. This is just saying that if you browse in the file manager, you will see those folders).
 
 ## 5. Build instructions
-   Inside `catkin_ws`, run `catkin build`
+   Inside `catkin_ws`, run `catkin build`:
 
 ```
 cd ~/catkin_ws
@@ -91,21 +93,22 @@ git submodule update --init --recursive
 
 Install some packages:
 ```
-sudo apt install python-matplotlib python-serial python-wxgtk3.0 python-wxtools python-lxml
-sudo apt install python-scipy python-opencv ccache gawk git python-pip python-pexpect
+sudo apt install python-matplotlib python-serial python-wxgtk3.0 python-wxtools python-lxml python-scipy python-opencv ccache gawk git python-pip python-pexpect
 sudo pip2 install future pymavlink MAVProxy
 ```
 
-Open `~/.bashrc`:
+Open `~/.bashrc` for editing:
 ```
 gedit ~/.bashrc
 ```
 
-Add these lines to end of `~/.bashrc`:
+Add these lines to end of `~/.bashrc` (the file open in the text editor):
 ```
 export PATH=$PATH:$HOME/ardupilot/Tools/autotest
 export PATH=/usr/lib/ccache:$PATH
 ```
+
+Save and close the text editor.
 
 Reload `~/.bashrc`:
 ```
@@ -117,6 +120,8 @@ Run SITL (Software In The Loop) once to set params:
 cd ~/ardupilot/ArduCopter
 sim_vehicle.py -w
 ```
+
+Once the new Terminal window pops up and you see the ArduPilot software say "READY TO FLY," you can kill the process by hitting "Control+C" in the Terminal it is running out of.
 
 ## 7. Install Gazebo
 
@@ -144,7 +149,6 @@ Install ROS plugins:
 ```
 sudo apt install ros-melodic-gazebo-ros ros-melodic-gazebo-plugins
 ```
-
 
 Get Gazebo plugin for APM (ArduPilot Master):
 ```
@@ -175,13 +179,13 @@ source ~/.bashrc
 
 ## 8. Run Simulator
 
-In one terminal, run SITL:
+In one Terminal (Terminal 1), run SITL:
 ```
 cd ~/ardupilot/ArduCopter/
 sim_vehicle.py -j4 -f Gazebo --console
 ```
 
-In another terminal, run Gazebo:
+In another Terminal (Terminal 2), run Gazebo:
 ```
 gazebo --verbose ~/ardupilot_gazebo/gazebo_worlds/iris_irlock_demo.world
 ```
@@ -190,25 +194,26 @@ Set parameters for sim in the same window after you run the `sim_vehicle.py scri
 Do this by using command `param load <filename>`
 Example params can be found in the `Controls-Other` repo: https://github.com/Texas-Aerial-Robotics/Controls-Other
 
-to load our parameters clone
+To load our parameters, clone our `Controls-Other` repository (Terminal 3):
 ```
 cd ~
 git clone https://github.com/Texas-Aerial-Robotics/Controls-Other
 ```
-in the ardupilot simulator terminal (MAVPROXY) run
+In the Ardupilot simulator Terminal (Terminal 1) run:
 ```
 param load ../../Controls-Other/Params/Sim_master.param
 ```
+Play around, then close by "Control+C" in the Terminal windows.
 
 ## 9. Install Roomba Drone Simulator
 
-In order to use the ardupilot simulator with the roombas as well as other plugins such as cameras you need to run gazebo with ros. Install the following dependencies to get the simulator to run
-
+In order to use the Ardupilot simulator with the Roombas - as well as other plugins such as cameras - you need to add ROS packages to Gazebo. 
+Install the following dependencies:
 ```
  sudo apt install ros-melodic-gazebo-ros ros-melodic-gazebo-plugins
 ```
-clone in Gazebo-Ros in your catkin_ws and the Computations repo in your home directory
 
+Clone in Gazebo-Ros in your catkin_ws and the Computations repo in your home directory:
 ```
 cd ~/catkin_ws/src
 git clone https://github.com/Texas-Aerial-Robotics/Gazebo-Ros.git
@@ -216,63 +221,71 @@ cd ~
 git clone https://github.com/Texas-Aerial-Robotics/Computations.git
 ```
 
-Add the following to your bashrc to use the roomba plugins
-
+Add the following to your `~/.bashrc` to use the Roomba plugins:
 ```
 export GAZEBO_MODEL_PATH=${GAZEBO_MODEL_PATH}:~/Computations/roomba_host/models
-```
-
-```
 export GAZEBO_PLUGIN_PATH=${GAZEBO_PLUGIN_PATH}:~/Computations/roomba_host/build
 ```
+
+Build the ROS packages you just downloaded:
+```
+cd ~/catkin_ws/
+catkin build
+```
+
+Reload `~/.bashrc` so the Terminal knows where the packages are located:
+```
+source ~/.bashrc
+```
+
 ### Run a sim with roslaunch
+In one Terminal (Terminal 1):
 ```
 roslaunch gazebo_ros_sim droneOnly.launch
 ```
-in another terminal run the following command to start and connect the ardupilot sim to gazebo
-
+In another Terminal (Terminal 2), run the following command to start and connect the Ardupilot simulator to Gazebo:
 ```
 cd ~/ardupilot/ArduCopter/ && sim_vehicle.py -f gazebo-iris --console -I0
 ```
+Play around, then close by "Control+C" in the Terminal windows.
 
 ### To view camera plugin
-install image view
-
+Install image view:
 ```
 sudo apt install ros-melodic-image-view
 ```
 
-To view camera footage
+To see camera view:
 ```
 rosrun image_view image_view image:=/webcam/image_raw
 ```
 
-
 ## 10. Run Mavros Scripts from Controls-Ros package
 
-launch the sim via roslaunch
-
+Launch the sim via roslaunch (Terminal 1):
 ```
 roslaunch gazebo_ros_sim droneOnly.launch
 ```
-in another terminal run the following command to start and connect the ardupilot sim to gazebo
-
+In another Terminal (Terminal 2) run the following command to start and connect the Ardupilot sim to Gazebo:
 ```
 cd ~/ardupilot/ArduCopter/ && sim_vehicle.py -f gazebo-iris --console -I0
 ```
-in another terminal run
+In another Terminal (Terminal 3) run:
 ```
 cd ~/Controls-Other/Launch/
 roslaunch apm.launch
 ```
-Be sure to wait for the drone to go throught the full initialization process. The drone will be ready to fly once the console reads Optical Flow now aiding and origin set to GPS. For the competition we will use mission planner to home the drone, but for introdution sake let the drone use GPS
+Be sure to wait for the drone to go throught the full initialization process. The drone will be ready to fly once the console reads Optical Flow now aiding and origin set to GPS. For the competition we will not use GPS to home the drone, but for introduction sake let the drone use GPS
 
-in another terminal run
+In another Terminal (Terminal 4) run:
 ```
 rosrun flight_pkg staple
 ```
 
-then in mavproxy switch the mode into `guided`
+Then in MavProxy (Terminal 2) switch the mode into `guided`:
+```
+mode GUIDED
+```
 
 you did it! 🎉
 
